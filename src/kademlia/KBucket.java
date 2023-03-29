@@ -3,24 +3,24 @@ package kademlia;
 import java.util.Map;
 import java.math.BigInteger;
 import java.util.LinkedHashMap;
-import java.util.Vector;
-
+import java.util.ArrayList;
+import java.util.Iterator;
+import kademlia.Node;
 public class KBucket {
     public LinkedHashMap<BigInteger, Node> nodes;
     public int k;
     public BigInteger rangeLower;
     public BigInteger rangeUpper;
 
-    public
-
-
-
-
     public KBucket(int k, BigInteger rangeLower, BigInteger rangeUpper) {
         this.k = k;
         this.rangeLower = rangeLower;
         this.rangeUpper = rangeUpper;
         this.nodes = new LinkedHashMap<>();
+    }
+
+    public Iterator<Node> getNodes() {
+        return this.nodes.values().iterator();
     }
 
     public boolean addNode(Node node) {
@@ -44,7 +44,7 @@ public class KBucket {
         return nodeId.compareTo(rangeLower) == 1 && nodeId.compareTo(rangeUpper) == -1;
     }
 
-    public Vector<KBucket> split() {
+    public ArrayList<KBucket> split() {
         BigInteger mid = rangeLower.add(rangeUpper).divide(new BigInteger("2"));
         KBucket one = new KBucket(k, rangeLower, mid);
         KBucket two = new KBucket(k, mid.add(new BigInteger("1")), rangeUpper);
@@ -56,9 +56,13 @@ public class KBucket {
                 two.addNode(node);
             }
         }
-        Vector<KBucket> out = new Vector<>();
+        ArrayList<KBucket> out = new ArrayList<>();
         out.add(one);
         out.add(two);
         return out;
+    }
+
+    public boolean isNewNode(Node node) {
+        return nodes.containsKey(node.id);
     }
 }
