@@ -25,6 +25,11 @@ public class Node {
         return this.id.xor(node.id);
     }
 
+    public BigInteger getId()
+    {
+        return this.id;
+    }
+
     @Override
     public String toString() {
         if (this == null) {

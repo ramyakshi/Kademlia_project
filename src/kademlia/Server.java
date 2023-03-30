@@ -1,23 +1,24 @@
 package kademlia;
 
+import messageComponents.ConnectReceiveHandler;
 import messageComponents.Message;
 import messageComponents.Receiver;
+import messageComponents.messageType;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.InputStream;
+import java.math.BigInteger;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
-import java.util.HashMap;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 public class Server {
-
+    /*
     //TODO - Finish Implementation
-    /*private static final int DATAGRAM_PACKET_SIZE = 64 * 1024;
+    private static final int DATAGRAM_PACKET_SIZE = 64 * 1024;
 
     private final DatagramSocket socket;
 
@@ -31,6 +32,8 @@ public class Server {
 
     private final Node localNode;
 
+    public static Map<BigInteger, Node> centralNodeList;
+
     public Server(int udpPort, Node localNode) throws SocketException
     {
         this.socket = new DatagramSocket(udpPort);
@@ -39,6 +42,7 @@ public class Server {
         this.receivers = new HashMap<>();
         this.scheduledTasks = new HashMap<>();
         this.timerValue = new Timer();
+        this.centralNodeList = new HashMap<>();
     }
 
     public void begin()
@@ -64,9 +68,12 @@ public class Server {
                 socket.receive(packet);
 
                 try{
-                    DataInputStream packetDataStream = new DataInputStream(new ByteArrayInputStream((packet.getData(),packet.getOffset(),packet.getLength()));
+                    DataInputStream packetDataStream = new DataInputStream(new ByteArrayInputStream(packet.getData(),packet.getOffset(),packet.getLength()));
 
-                    int id = packetDataStream.readInt();
+                    //int id = packetDataStream.readBigInteger();
+                    byte[] buffer = new byte[DATAGRAM_PACKET_SIZE];
+                    packetDataStream.readFully(buffer);
+                    BigInteger id = new BigInteger(1, buffer);
                     byte msgCode = packetDataStream.readByte();
 
                     packetDataStream.close();
@@ -89,8 +96,12 @@ public class Server {
                     }
                     else
                     {
-                        receiver = new Receiver();
+                        if(msgCode == messageType.CONNECT.getCode( ))
+                        {
+                            receiver = (Receiver) new ConnectReceiveHandler(this,centralNodeList.get(id));
+                        }
                     }
+
                 }
             }
         }
@@ -98,5 +109,6 @@ public class Server {
         {
             System.out.println("Exception while listening");
         }
-    }*/
+    }
+    */
 }

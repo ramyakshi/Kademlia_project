@@ -28,9 +28,9 @@ public class Protocol {
     /**
      * This node received a FIND_NODE request
      */
-    public void rpcFindNodeRequest(Node sender, Node node) {
+    public void rpcFindNodeRequest(Node sender, Node receiver) {
         this.welcomeIfNew(sender);
-        List<Node> neighbors = this.routingTable.findNeighbors(node, sender);
+        List<Node> neighbors = this.routingTable.findNeighbors(receiver, sender);
         EDSimulator.add(1, Event.RPC_FIND_NODE_RESPONSE, this.node, sender, new Payload(neighbors));
     }
 
