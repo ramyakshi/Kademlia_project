@@ -40,8 +40,11 @@ public class Protocol {
     public void rpcFindNodeResponse(List<Node> nodes) {
         // TODO: change this to complete node lookup procedure, now it just adds the contacts received
         for (Node node : nodes) {
-            this.routingTable.addContact(node);
+            this.welcomeIfNew(node);
         }
+        // is this response from which node?
+        // how many requests i have outstanding?
+        // should i send another request to another node?
     }
 
 
@@ -52,7 +55,7 @@ public class Protocol {
      */
     public void bootstrap(Node bootstrapNode) {
         // TODO: change this to complete node lookup procedure, now it just calls FIND_NODE on the bootstrap node
-        this.routingTable.addContact(bootstrapNode);
+        this.welcomeIfNew(bootstrapNode);
         Payload payload = new Payload(this.node);
         EDSimulator.add(1, Event.RPC_FIND_NODE_REQUEST, this.node, bootstrapNode, payload);
     }

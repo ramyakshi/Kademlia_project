@@ -1,8 +1,5 @@
 package kademlia;
 
-import kademlia.KBucket;
-import kademlia.Node;
-import kademlia.Config;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.PriorityQueue;
@@ -21,7 +18,7 @@ public class RoutingTable {
         // set initial bucket (covers entire range)
         kBuckets = new ArrayList<>();
         BigInteger rangeLower = new BigInteger("0");
-        BigInteger rangeUpper = new BigInteger("2").pow(160);
+        BigInteger rangeUpper = new BigInteger("2").pow(config.bitSpace).subtract(new BigInteger("1"));
         kBuckets.add(new KBucket(config.k, rangeLower, rangeUpper));
     }
 
@@ -41,7 +38,7 @@ public class RoutingTable {
         KBucket bucket = kBuckets.get(index);
 
         if (bucket.addNode(node)) {
-            // bucket not full, just add and return
+            // bucket not full / node already in, job done
             return;
         }
 
@@ -77,6 +74,7 @@ public class RoutingTable {
                 break;
             }
         }
+
         List<Node> out = new ArrayList<>();
         while (nodes.size() > 0) {
             out.add(nodes.poll());
