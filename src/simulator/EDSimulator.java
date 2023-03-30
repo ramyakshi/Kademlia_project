@@ -71,7 +71,7 @@ public class EDSimulator {
             return true;
         }
         CommonState.setTime(event.timestamp);
-        System.out.printf("event: %s | target: %s | sender: %s | payload: %s \n", event, event.target, event.sender, event.payload.node);
+        System.out.printf("event: %s | target: %s | sender: %s | payload: %s \n", event, event.target, event.sender, event.payload);
         Protocol eventTarget = EDSimulator.nodeIdToProtocol.get(event.target.id);
         eventTarget.processEvent(event);
         return queue.size() == 0;
