@@ -3,14 +3,14 @@ package kademlia;
 import java.util.Random;
 
 
-public final  class Config {
-    public int bitSpace = 32;
+public class Config {
+    public int bitSpace;
     public int k;
     public Random rng;
 
-    public Config(int bitSpace, int k, int rngSeed) {
+    public Config(int bitSpace, int k, Random rng) {
         this.bitSpace = bitSpace;
         this.k = k;
-        this.rng = new Random(rngSeed);
+        this.rng = rng;
     }
 }

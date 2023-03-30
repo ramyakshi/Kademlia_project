@@ -7,9 +7,9 @@ public class TableTraverser<T> implements Iterable<T> {
     RoutingTable routingTable;
     Node startNode;
 
-    public TableTraverser(RoutingTable rt, Node sn) {
-        this.routingTable = rt;
-        this.startNode = sn;
+    public TableTraverser(RoutingTable routingTable, Node startNode) {
+        this.routingTable = routingTable;
+        this.startNode = startNode;
     }
 
     // code for data structure
@@ -27,17 +27,18 @@ class TableTraverserIterator<T> implements Iterator<T> {
         int idx = traverser.routingTable.getBucketIdxFor(traverser.startNode);
         this.currentNodes = traverser.routingTable.kBuckets.get(idx).getNodes();
         this.leftBuckets = traverser.routingTable.kBuckets.subList(0, idx);
+        this.rightBuckets = traverser.routingTable.kBuckets.subList(idx+1, traverser.routingTable.kBuckets.size());
     }
 
     public boolean hasNext() {
-        return false;
+        return this.currentNodes.hasNext() || !this.leftBuckets.isEmpty() || !this.rightBuckets.isEmpty();
     }
 
     public T next() {
         if (this.currentNodes.hasNext()) {
             return (T) this.currentNodes.next();
         }
-        if (this.left && !this.leftBuckets.isEmpty()) {
+        if (!this.leftBuckets.isEmpty()) {
             this.currentNodes = this.leftBuckets.get(this.leftBuckets.size()-1).getNodes();
             this.leftBuckets = this.leftBuckets.subList(0, this.leftBuckets.size()-1);
             this.left = false;

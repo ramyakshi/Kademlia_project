@@ -4,6 +4,7 @@ import java.math.BigInteger;
 import java.util.*;
 
 import kademlia.Config;
+import kademlia.KBucket;
 import kademlia.Node;
 import kademlia.Protocol;
 
@@ -16,13 +17,15 @@ public class EDSimulator {
 
     /**
      * Runs an experiment
+     * @param nNodes - number of nodes
+     * @param nBootstraps - number of bootstrap operations (< nNodes)
      */
-    public static void start() {
-        int nNodes = 2;
+    public static void start(int nNodes, int nBootstraps, int bitSpace, int k) {
+        // 1. Create nodes
         int createdNodes = 0;
         while (createdNodes < nNodes) {
             // since our bit-space is small, it may clash, just loop until created as needed
-            Protocol protocol = new Protocol(new Config(3, 1, new Random().nextInt()));
+            Protocol protocol = new Protocol(new Config(bitSpace, k, new Random()));
             Protocol prevProtocol = nodeIdToProtocol.putIfAbsent(protocol.node.id, protocol);
             if (prevProtocol == null) {
                 protocols.add(protocol);
@@ -30,10 +33,12 @@ public class EDSimulator {
             }
         }
 
-        // add a fixed bootstrap event for initial test
-        Node eventTarget = protocols.get(0).node;
-        Node payloadTarget = protocols.get(1).node;
-        EDSimulator.add(0, Event.BOOTSTRAP, null, eventTarget, new Payload(payloadTarget));
+        // 2. Run bootstraps (fixed bootstrap node)
+        Node bootstrapNode = protocols.get(0).node;
+        for (int i = 0; i < nBootstraps; i++) {
+            Node eventTarget = protocols.get(1+i).node; // sequential after bootstrap node
+            EDSimulator.add(0, Event.BOOTSTRAP, null, eventTarget, new Payload(bootstrapNode));
+        }
 
         // perform the actual simulation
         boolean exit = false;
@@ -44,7 +49,15 @@ public class EDSimulator {
 
     public static void printEndState() {
         for (Protocol protocol : protocols) {
-            System.out.println(protocol.routingTable.kBuckets);
+            System.out.printf("Node %s \n", protocol.node);
+            for (KBucket kBucket : protocol.routingTable.kBuckets) {
+                System.out.printf("-> kBucket range: %s - %s\n", kBucket.rangeLower, kBucket.rangeUpper);
+                System.out.printf("--> nodes: ");
+                for (BigInteger nodeId : kBucket.nodes.keySet()) {
+                    System.out.printf("%s ", nodeId);
+                }
+                System.out.printf("\n");
+            }
         }
     }
 

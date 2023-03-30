@@ -5,12 +5,12 @@ import java.math.BigInteger;
 import java.util.LinkedHashMap;
 import java.util.ArrayList;
 import java.util.Iterator;
-import kademlia.Node;
+
 public class KBucket {
     public LinkedHashMap<BigInteger, Node> nodes;
     public int k;
-    public BigInteger rangeLower;
-    public BigInteger rangeUpper;
+    public BigInteger rangeLower; // inclusive
+    public BigInteger rangeUpper; // inclusive
 
     public KBucket(int k, BigInteger rangeLower, BigInteger rangeUpper) {
         this.k = k;
@@ -41,7 +41,7 @@ public class KBucket {
     }
 
     public boolean hasInRange(BigInteger nodeId) {
-        return nodeId.compareTo(rangeLower) == 1 && nodeId.compareTo(rangeUpper) == -1;
+        return nodeId.compareTo(rangeLower) > -1 && nodeId.compareTo(rangeUpper) < 1;
     }
 
     public ArrayList<KBucket> split() {
@@ -63,6 +63,6 @@ public class KBucket {
     }
 
     public boolean isNewNode(Node node) {
-        return nodes.containsKey(node.id);
+        return !nodes.containsKey(node.id);
     }
 }
