@@ -5,6 +5,8 @@ import simulator.Event;
 import simulator.Payload;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class Protocol {
@@ -17,6 +19,10 @@ public class Protocol {
         this.routingTable = new RoutingTable(nodeId, config);
     }
 
+    public RoutingTable getRoutingTable()
+    {
+        return this.routingTable;
+    }
     public void welcomeIfNew(Node node) {
         if (!routingTable.isNewNode(node)) {
             return;
@@ -60,11 +66,21 @@ public class Protocol {
         EDSimulator.add(1, Event.RPC_FIND_NODE_REQUEST, this.node, bootstrapNode, payload);
     }
 
-
+    public void rpcNodeLookUpRequest(NetworkCrawler crawler, Node target, HashMap<BigInteger, Protocol> map)
+    {
+        List<Node> lookedUpNodes = crawler.nodeLookupBegin(target, map);
+        System.out.println("Node lookup for " + target.getId() + " returned - ");
+        System.out.println(lookedUpNodes.size());
+        for(Node n : lookedUpNodes)
+        {
+            System.out.print(n.getId()+" ");
+        }
+        System.out.println();
+    }
     /**
      * Called by simulator
      */
-    public void processEvent(Event event) {
+    public void processEvent(Event event, NetworkCrawler crawler, HashMap<BigInteger, Protocol> map) {
         switch (event.type) {
 
             case Event.BOOTSTRAP:
@@ -76,6 +92,8 @@ public class Protocol {
             case Event.RPC_FIND_NODE_RESPONSE:
                 this.rpcFindNodeResponse(event.payload.nodes);
                 break;
+            case Event.NODE_LOOKUP_REQUEST:
+                this.rpcNodeLookUpRequest(crawler,event.target,map);
         }
     }
 }

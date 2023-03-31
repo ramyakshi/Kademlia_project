@@ -10,17 +10,25 @@ public class Node {
     public int port;
     public int idLength = 32;
 
-    public transient RoutingTable routingTable;
-
     public Node(BigInteger id) {
         this.id = id;
     }
-    public Node(BigInteger id, int port, RoutingTable table) {
+    public Node(BigInteger id, int port) {
         this.id = id;
         this.port = port;
-        this.routingTable = table;
     }
 
+    @Override
+    public boolean equals(Object n)
+    {
+        if(n instanceof Node)
+        {
+            Node n1 = (Node) n;
+            if(n1.getId()==this.getId())
+                return true;
+        }
+        return false;
+    }
     public BigInteger distanceTo(Node node) {
         return this.id.xor(node.id);
     }
@@ -38,7 +46,4 @@ public class Node {
         return this.id.toString();
     }
 
-    public RoutingTable getRoutingTable() {
-        return routingTable;
-    }
 }

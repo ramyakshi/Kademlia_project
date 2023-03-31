@@ -4,7 +4,7 @@ import kademlia.Node;
 import kademlia.Server;
 
 public class ConnectReceiveHandler{
-
+/*
     private final Server server;
     private final Node receivingNode;
 
@@ -23,4 +23,6 @@ public class ConnectReceiveHandler{
 
         // Server should reply with the ack below.
      }
+
+ */
 }
