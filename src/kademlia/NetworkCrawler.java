@@ -99,7 +99,7 @@ public class NetworkCrawler {
             contactStatusMap.put(initialKNearest.get(i),"NOTCONTACTED");
         }
         List<Node> result =  nodeLookupRecursive(initialKNearest, target);
-        System.out.println(result.size());
+        //System.out.println(result.size());
         return result;
     }
     public void printContactMap()
@@ -112,8 +112,8 @@ public class NetworkCrawler {
     }
    public List<Node> nodeLookupRecursive(List<Node> kNearestList, Node target)
    {
-       /*printContactMap();
-       System.out.println("Printing k nearest list");
+       printContactMap();
+       /*System.out.println("Printing k nearest list");
        for(int i=0;i<kNearestList.size();i++)
        {
            System.out.print(kNearestList.get(i)+" ");
@@ -152,7 +152,7 @@ public class NetworkCrawler {
            {
                System.out.print(kNearestList.get(i) + " ");
            }*/
-           System.out.println();
+           //System.out.println();
            return kNearestList;
        }
        // Remove nodes which failed to respond

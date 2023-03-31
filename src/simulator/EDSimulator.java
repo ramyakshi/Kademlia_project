@@ -21,10 +21,11 @@ public class EDSimulator {
         // 1. Create nodes
         int createdNodes = 0;
         HashSet<BigInteger> nodeIds = new HashSet<>();
+        // Increment seed and pass it as value to random constructor while constructing Config
         long seed = 30;
         while (createdNodes < nNodes) {
             // since our bit-space is small, it may clash, just loop until created as needed
-            Protocol protocol = new Protocol(new Config(bitSpace, k, new Random(seed++)));
+            Protocol protocol = new Protocol(new Config(bitSpace, k, new Random()));
             Protocol prevProtocol = nodeIdToProtocol.putIfAbsent(protocol.node.id, protocol);
             if (prevProtocol == null) {
                 protocols.add(protocol);
@@ -35,7 +36,7 @@ public class EDSimulator {
 
         Random random=new Random(seed++);
         int randomNode=random.nextInt(nNodes-1)+1;
-        System.out.println("Target node - " + protocols.get(randomNode));
+        //System.out.println("Target node - " + protocols.get(randomNode));
         Node targetForLookup = protocols.get(randomNode).node;
 
 

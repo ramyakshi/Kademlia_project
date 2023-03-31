@@ -3,7 +3,7 @@ import simulator.EDSimulator;
 public class Simulate {
     public static void main(String[] args) {
         System.out.println("\n=== STARTING SIMULATION");
-        EDSimulator.start(20, 19, 6, 3); // to test splitting buckets
+        EDSimulator.start(6, 5, 3, 3); // to test splitting buckets
         System.out.println("\n=== PRINTING END STATE");
         EDSimulator.printEndState();
 

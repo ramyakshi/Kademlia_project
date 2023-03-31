@@ -9,8 +9,17 @@ public class NodeStorage {
 
     public int ttl = 604800;
 
-    public HashMap<BigInteger, ArrayList<Content>> nodeStorageTable = new HashMap<>();
+    public HashMap<BigInteger, ArrayList<Content>> nodeStorageTable;
 
+    public NodeStorage()
+    {
+        this.nodeStorageTable =  new HashMap<>();
+    }
+
+    public HashMap<BigInteger, ArrayList<Content>> getNodeStorageTable()
+    {
+        return this.nodeStorageTable;
+    }
     public void setValue(BigInteger key, long value)
     {
         if(!this.nodeStorageTable.containsKey(key))

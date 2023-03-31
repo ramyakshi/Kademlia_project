@@ -1,5 +1,6 @@
 package kademlia;
 
+import components.Content;
 import simulator.EDSimulator;
 import simulator.Event;
 import simulator.Payload;
@@ -17,8 +18,10 @@ public class Protocol {
         BigInteger nodeId = new BigInteger(config.bitSpace, config.rng);
         this.node = new Node(nodeId);
         this.routingTable = new RoutingTable(nodeId, config);
+        this.storage = new NodeStorage();
     }
 
+    NodeStorage storage;
     public RoutingTable getRoutingTable()
     {
         return this.routingTable;
@@ -70,7 +73,7 @@ public class Protocol {
     {
         List<Node> lookedUpNodes = crawler.nodeLookupBegin(target, map);
         System.out.println("Node lookup for " + target.getId() + " returned - ");
-        System.out.println(lookedUpNodes.size());
+        //System.out.println(lookedUpNodes.size());
         for(Node n : lookedUpNodes)
         {
             System.out.print(n.getId()+" ");
@@ -95,5 +98,12 @@ public class Protocol {
             case Event.NODE_LOOKUP_REQUEST:
                 this.rpcNodeLookUpRequest(crawler,event.target,map);
         }
+    }
+
+    public void rpcStore(BigInteger id, Content content)
+    {
+        Node n = new Node(id);
+        this.welcomeIfNew(n);
+
     }
 }
