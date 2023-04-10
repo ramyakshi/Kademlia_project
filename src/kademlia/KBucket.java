@@ -1,13 +1,14 @@
 package kademlia;
 
 import java.util.Map;
-import java.math.BigInteger;
 import java.util.LinkedHashMap;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Iterator;
 
 public class KBucket {
     public LinkedHashMap<BigInteger, Node> nodes;
+    public LinkedHashMapLRU<BigInteger, Node> replacementNodes;
     public Config config;
     public BigInteger rangeLower; // inclusive
     public BigInteger rangeUpper; // inclusive
@@ -17,6 +18,7 @@ public class KBucket {
         this.rangeLower = rangeLower;
         this.rangeUpper = rangeUpper;
         this.nodes = new LinkedHashMap<>();
+        this.replacementNodes = new LinkedHashMapLRU<>(config.k);
     }
 
     public Iterator<Node> getNodes() {
@@ -32,12 +34,28 @@ public class KBucket {
             // else if bucket has capacity, add
             this.nodes.put(node.id, node);
         } else {
-            // TODO: add to replacement list
+            // add to replacement list
+            if (this.replacementNodes.containsKey(node.id)) {
+                this.replacementNodes.remove(node.id);
+            }
+            this.replacementNodes.put(node.id, node);
             return false;
         }
         return true;
+    }
 
+    public void removeNode(Node node) {
+        if (this.replacementNodes.containsKey(node.id)) {
+            this.replacementNodes.remove(node.id);
+        }
+        if (this.nodes.containsKey(node.id)) {
+            this.nodes.remove(node.id);
 
+            if (this.replacementNodes.size() > 0) {
+                Node newNode = this.replacementNodes.pop();
+                this.nodes.put(newNode.id, newNode);
+            }
+        }
     }
 
     public boolean hasInRange(BigInteger nodeId) {
@@ -48,6 +66,8 @@ public class KBucket {
         BigInteger mid = rangeLower.add(rangeUpper).divide(new BigInteger("2"));
         KBucket one = new KBucket(config, rangeLower, mid);
         KBucket two = new KBucket(config, mid.add(new BigInteger("1")), rangeUpper);
+
+        // split bucket nodes
         for (Map.Entry<BigInteger, Node> entry : nodes.entrySet()) {
             Node node = entry.getValue();
             if (node.id.compareTo(mid) < 1) {
@@ -56,6 +76,16 @@ public class KBucket {
                 two.addNode(node);
             }
         }
+        // split replacement nodes
+        for (Map.Entry<BigInteger, Node> entry : replacementNodes.entrySet()) {
+            Node node = entry.getValue();
+            if (node.id.compareTo(mid) < 1) {
+                one.addNode(node);
+            } else {
+                two.addNode(node);
+            }
+        }
+
         ArrayList<KBucket> out = new ArrayList<>();
         out.add(one);
         out.add(two);
