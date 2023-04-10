@@ -1,9 +1,11 @@
 import simulator.EDSimulator;
 
+import java.math.BigInteger;
+
 public class Simulate {
     public static void main(String[] args) {
         System.out.println("\n=== STARTING SIMULATION");
-        EDSimulator.start(6, 5, 3, 3); // to test splitting buckets
+        EDSimulator.start(8, 7, 3, 1); // to test splitting buckets
         System.out.println("\n=== PRINTING END STATE");
         EDSimulator.printEndState();
 

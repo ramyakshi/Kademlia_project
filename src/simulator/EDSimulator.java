@@ -24,7 +24,7 @@ public class EDSimulator {
         // Increment seed and pass it as value to random constructor while constructing Config
         long seed = 30;
         while (createdNodes < nNodes) {
-            // since our bit-space is small, it may clash, just loop until created as needed
+            // if our bit-space is small, it may clash, just loop until created as needed
             Protocol protocol = new Protocol(new Config(bitSpace, k, new Random()));
             Protocol prevProtocol = nodeIdToProtocol.putIfAbsent(protocol.node.id, protocol);
             if (prevProtocol == null) {
@@ -77,7 +77,7 @@ public class EDSimulator {
         for (Protocol protocol : protocols) {
             System.out.printf("Node %s \n", protocol.node);
             for (KBucket kBucket : protocol.routingTable.kBuckets) {
-                System.out.printf("-> kBucket range: %s - %s\n", kBucket.rangeLower, kBucket.rangeUpper);
+                System.out.printf("-> kBucket range: %s - %s | depth: %d\n", kBucket.rangeLower, kBucket.rangeUpper, kBucket.depth());
                 System.out.printf("--> nodes: ");
                 for (BigInteger nodeId : kBucket.nodes.keySet()) {
                     System.out.printf("%s ", nodeId);

@@ -19,7 +19,7 @@ public class RoutingTable {
         kBuckets = new ArrayList<>();
         BigInteger rangeLower = new BigInteger("0");
         BigInteger rangeUpper = new BigInteger("2").pow(config.bitSpace).subtract(new BigInteger("1"));
-        kBuckets.add(new KBucket(config.k, rangeLower, rangeUpper));
+        kBuckets.add(new KBucket(config, rangeLower, rangeUpper));
     }
 
     public int getBucketIdxFor(Node node) {
@@ -42,8 +42,7 @@ public class RoutingTable {
             return;
         }
 
-        // TODO: Accelerated lookup / relaxed routing
-        if (bucket.hasInRange(this.nodeId)) {
+        if (bucket.hasInRange(this.nodeId) || bucket.depth() % 5 != 0) {
             this.splitBucket(index);
             this.addContact(node);
         }
