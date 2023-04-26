@@ -3,42 +3,46 @@ package components;
 import java.math.BigInteger;
 import java.util.Comparator;
 
-public class Content implements Comparable<Content> {
+public class Content {
 
 // Not sure if both creation and update timestamps are needed
 
-    public long timeStamp;
+    public long expiration;
+    public String value;
 
     public Content() {
 
     }
 
-    public long getTimeStamp() {
-        return timeStamp;
+    public long getExpiration() {
+        return expiration;
     }
 
-    public void setTimeStamp(long timeStamp) {
-        this.timeStamp = timeStamp;
+    public void setExpiration(long expiration) {
+        this.expiration = expiration;
     }
 
-    public long getValue() {
+    public String getValue() {
         return value;
     }
 
-    public void setValue(long value) {
+    public void setValue(String value) {
         this.value = value;
     }
 
-    public long value;
-
-    public Content(long timeStamp, long value)
+    public boolean hasExpired()
     {
-        this.timeStamp = timeStamp;
+        return System.nanoTime() > expiration;
+    }
+
+
+    public Content(long expiration, String value)
+    {
+        this.expiration = expiration;
         this.value = value;
     }
 
-    @Override
-    public int compareTo(Content c) {
-        return Long.compare(this.getTimeStamp(),c.getTimeStamp());
-    }
+    /*public int compareTo(Content c) {
+        return Long.compare(this.getExpiration(),c.getExpiration());
+    }*/
 }

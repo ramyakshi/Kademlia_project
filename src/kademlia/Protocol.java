@@ -14,6 +14,8 @@ public class Protocol {
     public Node node; // (Dumb) Node representation of this Protocol, without state
     public RoutingTable routingTable;
 
+    public NodeStorage storage;
+
     public Protocol(Config config) {
         BigInteger nodeId = new BigInteger(config.bitSpace, config.rng);
         this.node = new Node(nodeId);
@@ -21,7 +23,6 @@ public class Protocol {
         this.storage = new NodeStorage();
     }
 
-    NodeStorage storage;
     public RoutingTable getRoutingTable()
     {
         return this.routingTable;
@@ -30,6 +31,7 @@ public class Protocol {
         if (!routingTable.isNewNode(node)) {
             return;
         }
+        //System.out.println("New Node is being added - "+node.getId());
         // TODO: store keys in new node
         routingTable.addContact(node);
     }
@@ -72,14 +74,38 @@ public class Protocol {
     public void rpcNodeLookUpRequest(NetworkCrawler crawler, Node target, HashMap<BigInteger, Protocol> map)
     {
         List<Node> lookedUpNodes = crawler.nodeLookupBegin(target, map);
-        System.out.println("Node lookup for " + target.getId() + " returned - ");
+        EDSimulator.add(1, Event.NODE_LOOKUP_RESPONSE, target,this.node,new Payload(lookedUpNodes));
+    }
+
+    public void rpcNodeLookUpResponse(List<Node> nodes)
+    {
+        System.out.print("Node lookup returned - ");
         //System.out.println(lookedUpNodes.size());
-        for(Node n : lookedUpNodes)
+        for(Node n : nodes)
         {
             System.out.print(n.getId()+" ");
         }
         System.out.println();
     }
+    public void callRemoteStore(HashMap<BigInteger,Protocol> nodeToProtocolMap, BigInteger NodeToAsk, BigInteger key, String value, Node sender)
+    {
+        Protocol protocol = nodeToProtocolMap.get(NodeToAsk);
+        EDSimulator.add(4,Event.STORE_REQUEST,sender,this.node,new Payload(key,value));
+        protocol.rpcStoreRequest(sender,key,value);
+    }
+    public void rpcStoreRequest(Node sender,BigInteger key,String value)
+    {
+        System.out.println(this.node.getId()+" storing key "+ key+" and value "+ value);
+        this.welcomeIfNew(sender);
+        this.storage.setValue(key,value,0);
+        EDSimulator.add(5,Event.STORE_RESPONSE,this.node,sender,new Payload(key,value));
+    }
+
+    public void rpcStoreResponse(String value)
+    {
+        System.out.println("Node "+this.node.getId()+" stored value " +value);
+    }
+
     /**
      * Called by simulator
      */
@@ -97,13 +123,14 @@ public class Protocol {
                 break;
             case Event.NODE_LOOKUP_REQUEST:
                 this.rpcNodeLookUpRequest(crawler,event.target,map);
+                break;
+            case Event.STORE_REQUEST:
+                this.rpcStoreRequest(event.sender,event.payload.keyToStore, event.payload.valueToStore);
+                break;
+            case Event.STORE_RESPONSE:
+                this.rpcStoreResponse(event.payload.valueToStore);
+                break;
         }
     }
 
-    public void rpcStore(BigInteger id, Content content)
-    {
-        Node n = new Node(id);
-        this.welcomeIfNew(n);
-
-    }
 }

@@ -13,6 +13,10 @@ public class Event implements Comparable<Event> {
 
     public static final int NODE_LOOKUP_RESPONSE = 5;
 
+    public static final int STORE_REQUEST = 6;
+
+    public static final int STORE_RESPONSE = 7;
+
     public Node sender;
     public Node target;
     public Payload payload;
@@ -37,7 +41,9 @@ public class Event implements Comparable<Event> {
             case RPC_FIND_NODE_REQUEST -> "RPC_FIND_NODE_REQUEST";
             case RPC_FIND_NODE_RESPONSE -> "RPC_FIND_NODE_RESPONSE";
             case NODE_LOOKUP_REQUEST -> "NODE_LOOKUP_REQUEST";
-
+            case NODE_LOOKUP_RESPONSE -> "NODE_LOOKUP_RESPONSE";
+            case STORE_REQUEST -> "STORE_REQUEST";
+            case STORE_RESPONSE -> "STORE_RESPONSE";
             default -> "UNKNOWN";
         };
         return String.format("%d %s", this.timestamp, type);

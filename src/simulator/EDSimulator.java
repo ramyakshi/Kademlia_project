@@ -25,7 +25,7 @@ public class EDSimulator {
         long seed = 30;
         while (createdNodes < nNodes) {
             // if our bit-space is small, it may clash, just loop until created as needed
-            Protocol protocol = new Protocol(new Config(bitSpace, k, new Random()));
+            Protocol protocol = new Protocol(new Config(bitSpace, k, new Random(seed++)));
             Protocol prevProtocol = nodeIdToProtocol.putIfAbsent(protocol.node.id, protocol);
             if (prevProtocol == null) {
                 protocols.add(protocol);
@@ -57,7 +57,9 @@ public class EDSimulator {
                 break;
             }
         }
+        EDSimulator.add(queue.size()+1,Event.STORE_REQUEST,bootstrapNode,protocols.get(randomNode).node,new Payload(BigInteger.valueOf(50),"50"));
         EDSimulator.add(queue.size()+1, Event.NODE_LOOKUP_REQUEST, null,protocols.get(randomNode).node,new Payload(protocols.get((randomNode+1)%nNodes).node));
+        //printEventQueue();
         // perform the actual simulation
         boolean exit = false;
         while (!exit) {
@@ -72,7 +74,14 @@ public class EDSimulator {
         }
         System.out.println();*/
     }
-
+    public static  void printEventQueue()
+    {
+        System.out.println("Printing initial queue");
+        for(Event event : queue)
+        {
+            System.out.printf("event: %s | target: %s | sender: %s | payload: %s \n", event, event.target, event.sender, event.payload);
+        }
+    }
     public static void printEndState() {
         for (Protocol protocol : protocols) {
             System.out.printf("Node %s \n", protocol.node);
@@ -114,6 +123,7 @@ public class EDSimulator {
         Event event = new Event(currTime + delay, type, sender, target, payload);
         queue.add(event);
     }
+
 
     public static void checkFindNeighbors()
     {

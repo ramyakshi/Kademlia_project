@@ -1,5 +1,6 @@
 package simulator;
 
+import java.math.BigInteger;
 import java.util.*;
 
 import kademlia.*;
@@ -11,6 +12,14 @@ import kademlia.*;
 public class Payload {
     public Node node;
     public List<Node> nodes;
+
+    //Could also be key, value pair for store RPC
+    public BigInteger keyToStore;
+
+    public String valueToStore;
+
+    //Use this generic string for other communications if needed
+    public String message;
     public Payload(Node node) {
         this.node = node;
     }
@@ -18,6 +27,8 @@ public class Payload {
         this.nodes = nodes;
     }
 
+    public Payload(BigInteger key, String value){this.keyToStore = key; this.valueToStore = value;}
+    public Payload(String message) {this.message = message;}
     @Override
     public String toString() {
         if (this.node == null && this.nodes == null) {

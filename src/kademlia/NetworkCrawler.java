@@ -163,14 +163,13 @@ public class NetworkCrawler {
    {
 
        ArrayList<Node> toRemove = new ArrayList<>();
-       /* Below block for removing nodes which didn't respond
+       //Below block for removing nodes which didn't respond
        List<Node> keysAsArray = new ArrayList<>(nearestReturned.keySet());
        Random r = new Random();
 
        // For now, 1 random node didn't respond
-       // toRemove.add(keysAsArray.get(r.nextInt(keysAsArray.size())));
-       BLock end
-       */
+       //toRemove.add(keysAsArray.get(r.nextInt(keysAsArray.size())));
+       //System.out.println("Node did not respond - " + toRemove.get(0).getId());
        for(Map.Entry<Node, List<Node>> entry : nearestReturned.entrySet())
        {
 

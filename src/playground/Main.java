@@ -11,12 +11,12 @@ class Main {
         BigInteger y = new BigInteger("4");
         System.out.println(x.add(y).divide(new BigInteger("2")));
 
-        Content c1 = new Content(System.nanoTime(),123);
+        Content c1 = new Content(System.nanoTime(),"123");
 
         Thread.sleep(1000);
 
-        Content c2 = new Content(System.nanoTime(),123);
-        System.out.println(c2.compareTo(c1));
+        Content c2 = new Content(System.nanoTime(),"123");
+        //System.out.println(c2.compareTo(c1));
 
 
     }
