@@ -28,6 +28,12 @@ public class Payload {
     }
 
     public Payload(BigInteger key, String value){this.keyToStore = key; this.valueToStore = value;}
+    public Payload(BigInteger key, String value, String msg)
+    {
+        this.keyToStore = key;
+        this.valueToStore = value;
+        this.message = msg;
+    }
     public Payload(String message) {this.message = message;}
     @Override
     public String toString() {

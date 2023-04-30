@@ -1,10 +1,7 @@
 package kademlia;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.PriorityQueue;
-import java.util.List;
-import java.util.Comparator;
+import java.util.*;
 
 public class RoutingTable {
     public BigInteger nodeId; // node ID of the node this routing table belongs to
@@ -49,6 +46,13 @@ public class RoutingTable {
         // TODO: add node to potential replacement list
     }
 
+    public void removeContact(Node node)
+    {
+        int index = this.getBucketIdxFor(node);
+        KBucket kBucket = kBuckets.get(index);
+
+        kBucket.removeNode(node);
+    }
     public void splitBucket(int index) {
         ArrayList<KBucket> splits = kBuckets.get(index).split();
         kBuckets.set(index, splits.get(0));

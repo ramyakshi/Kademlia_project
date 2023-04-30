@@ -17,6 +17,10 @@ public class Event implements Comparable<Event> {
 
     public static final int STORE_RESPONSE = 7;
 
+    public static final int PING_REQUEST = 8;
+
+    public static final int PING_RESPONSE = 9;
+
     public Node sender;
     public Node target;
     public Payload payload;

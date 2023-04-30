@@ -1,4 +1,8 @@
 package kademlia;
+import simulator.EDSimulator;
+import simulator.Event;
+import simulator.Payload;
+
 import java.math.BigInteger;
 import java.util.*;
 
@@ -24,6 +28,7 @@ public class NetworkCrawler {
 
     HashMap<BigInteger, Protocol> nodeIdToProtocol;
 
+    public static long nowTime = 0;
     public NetworkCrawler(int k, int alpha, Protocol protocol)
     {
         //this.node = node;
@@ -56,7 +61,7 @@ public class NetworkCrawler {
         return nodes;
     }
 
-    public List<Node> nodeLookupBegin(Node target, HashMap<BigInteger, Protocol> nodeProtocolMap)
+    public List<Node> nodeLookupBegin(Node target, HashMap<BigInteger, Protocol> nodeProtocolMap, long nowTime,Node sender)
     {
        /* nearestKNodes = getKNearest(globalList, target);
         PriorityQueue<Node> copyQueue = nearestKNodes;
@@ -70,6 +75,8 @@ public class NetworkCrawler {
         return nodeLookupRecursive(kNearestList,target);
 
         */
+        if(this.nowTime == 0)
+            this.nowTime = nowTime;
         if(this.nodeIdToProtocol == null)
             this.nodeIdToProtocol = nodeProtocolMap;
 
@@ -135,7 +142,9 @@ public class NetworkCrawler {
                    localCount++;
                    //System.out.println("Local count value - "+ localCount + " Node -" + n.getId());
                    //Send lookup message
-                   List<Node> newNodes = this.nodeIdToProtocol.get(n.getId()).routingTable.findNeighbors(target,null);
+                   //List<Node> newNodes = this.nodeIdToProtocol.get(n.getId()).routingTable.findNeighbors(target,null);
+                   List<Node> newNodes = this.protocol.callFindNode(nodeIdToProtocol,n,target.getId());
+                   //EDSimulator.add(nowTime+1, Event.RPC_FIND_NODE_REQUEST,this.node,n,new Payload(this.node));
                    contactStatusMap.put(n,"CONTACTED");
                    nearestReturned.put(n,newNodes);
                }

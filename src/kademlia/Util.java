@@ -1,4 +1,7 @@
 package kademlia;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 import java.math.BigInteger;
 
@@ -13,5 +16,19 @@ public class Util {
             c++;
         }
         return c;
+    }
+
+    public static BigInteger digest(BigInteger input)
+    {
+        return input;
+        /*try{
+            byte[] inputBytes = input.toByteArray();
+            return new BigInteger(1,MessageDigest.getInstance("SHA1").digest(inputBytes));
+        }
+        catch(NoSuchAlgorithmException e)
+        {
+            throw new RuntimeException("SHA Alogrithm does not exist");
+            //System.out.println(e.toString());
+        }*/
     }
 }

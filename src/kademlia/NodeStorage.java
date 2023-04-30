@@ -27,13 +27,14 @@ public class NodeStorage {
 
         Content val = new Content(expiryTime, value);
         this.nodeStorageTable.put(key,val);
-        deleteOlderThan(key, this.ttl);
+        //System.out.println("NodeStorage - " + nodeStorageTable.get(key).getValue());
+        //deleteOlderThan(key, this.ttl);
     }
 
     public String getContentValue(BigInteger key)
     {
-        deleteOlderThan(key, this.ttl);
-        Content result = nodeStorageTable.getOrDefault(key,null);
+        //deleteOlderThan(key, this.ttl);
+        Content result = this.nodeStorageTable.getOrDefault(key,null);
         if(result==null)
             return null;
         return result.getValue();
@@ -49,6 +50,7 @@ public class NodeStorage {
             HashMap.Entry<BigInteger,Content> entry = iterator.next();
             if(entry.getValue().getExpiration()<thresholdTime)
             {
+                System.out.println(entry.getKey()+ " is removed");
                 iterator.remove();
             }
         }
