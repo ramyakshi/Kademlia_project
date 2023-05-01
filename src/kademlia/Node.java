@@ -24,10 +24,16 @@ public class Node {
         if(n instanceof Node)
         {
             Node n1 = (Node) n;
-            if(n1.getId()==this.getId())
+            if(n1.getId().compareTo(this.getId())==0)
                 return true;
         }
         return false;
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return this.id == null ? -1 : this.getId().hashCode();
     }
     public BigInteger distanceTo(Node node) {
         return this.id.xor(node.id);

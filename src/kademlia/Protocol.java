@@ -19,7 +19,13 @@ public class Protocol {
 
     public static long nowTime = 0;
 
+    public static int k;
+
+    public static int alpha;
+
     public Protocol(Config config) {
+        this.k = config.k;
+        this.alpha = config.alpha;
         BigInteger nodeId = new BigInteger(config.bitSpace, config.rng);
         this.node = new Node(nodeId);
         this.routingTable = new RoutingTable(nodeId, config);
@@ -61,7 +67,7 @@ public class Protocol {
             }
             if(neighbours==null || neighbours.size()==0 || (is_new_node_closer && this_closest))
             {
-                EDSimulator.add(nowTime+1,Event.STORE_REQUEST,this.node,node,new Payload(key,value.getValue()));
+                EDSimulator.add(1,Event.STORE_REQUEST,this.node,node,new Payload(key,value.getValue()));
             }
 
         }
@@ -71,7 +77,7 @@ public class Protocol {
     /**
      * This node received a FIND_NODE request
      */
-    public List<Node> callFindNode(HashMap<BigInteger, Protocol> nodeToProtocolMap, Node nodeToAsk, BigInteger targetId) {
+    public List<Node> callFindNode(HashMap<BigInteger, Protocol> nodeToProtocolMap, Node nodeToAsk, BigInteger targetId, boolean external) {
         Protocol protocol = nodeToProtocolMap.getOrDefault(nodeToAsk.getId(), null);
         Event result = null;
         if(protocol==null)
@@ -81,6 +87,7 @@ public class Protocol {
             System.out.println("Protocol with id - "+nodeToAsk+" does not exist");
             return null;
         }
+        //if(targetId.equals(BigInteger.valueOf(3)))
         if (protocol != null) {
             result = protocol.rpcFindNodeRequest(this.node, targetId);
         }
@@ -88,19 +95,27 @@ public class Protocol {
         if (result != null) {
             //result.sender = nodeToAsk;
             //handleResponse(result,nodeToProtocolMap);
-            EDSimulator.add(nowTime+1,Event.RPC_FIND_NODE_RESPONSE,result.sender,result.target,result.payload);
+            if(external==false)
+                EDSimulator.add(1,Event.RPC_FIND_NODE_RESPONSE,result.sender,result.target,result.payload);
+            else
+            {
+                result.type = Event.DEFAULT;
+                this.handleResponse(result,nodeToProtocolMap);
+            }
         }
         return result.payload.nodes;
+    }
+    public List<Node> callFindNode(HashMap<BigInteger, Protocol> nodeToProtocolMap, Node nodeToAsk, BigInteger targetId) {
+        return this.callFindNode(nodeToProtocolMap,nodeToAsk,targetId,false);
     }
 
     public Event rpcFindNodeRequest(Node sender, BigInteger targetId) {
         this.welcomeIfNew(sender);
-        //System.out.println("Node " + this.node.getId() + " received FIND_NODE request from " + sender.getId() + " for target " + targetId);
-
+        System.out.println("Node " + this.node.getId() + " received FIND_NODE request from " + sender.getId() + " for target " + targetId);
         List<Node> foundNodes = this.routingTable.findNeighbors(new Node(targetId),  sender);
         //System.out.println("size - " + foundNodes.size());
         Payload payload = new Payload(foundNodes);
-        return new Event(nowTime+1, Event.RPC_FIND_NODE_RESPONSE, this.node, sender, payload);
+        return new Event(1, Event.RPC_FIND_NODE_RESPONSE, this.node, sender, payload);
     }
 
     /*public void rpcFindNodeRequest(Node sender, Node receiver) {
@@ -137,12 +152,12 @@ public class Protocol {
             }
         }
 
-        /*NetworkCrawler spider = new NetworkCrawler(this, localNode, bootstrappedNodes, ksize, alpha);
-        return spider.find();*/
+        NetworkCrawler spider = new NetworkCrawler(this.k,this.alpha, this);
+        spider.nodeLookupBegin(this.node,nodeToProtocolMap,nowTime);
     }
 
     public Node bootstrapNode(HashMap<BigInteger,Protocol> nodeToProtocolMap,Node node) {
-        boolean success = this.callPing(nodeToProtocolMap, node.getId());
+        boolean success = this.callPing(nodeToProtocolMap, node.getId(),true);
         if (success) {
             return node;
         } else {
@@ -150,29 +165,13 @@ public class Protocol {
         }
     }
 
-    /*public void bootstrap(Node bootstrapNode) {
-        // TODO: change this to complete node lookup procedure, now it just calls FIND_NODE on the bootstrap node
-        this.welcomeIfNew(bootstrapNode);
-        Payload payload = new Payload(this.node);
-        EDSimulator.add(nowTime+1, Event.RPC_FIND_NODE_REQUEST, this.node, bootstrapNode, payload);
-    }*/
-
-    public void rpcNodeLookUpRequest(NetworkCrawler crawler, Node target, HashMap<BigInteger, Protocol> map)
+    public void rpcNodeLookUpRequest(Node target, HashMap<BigInteger, Protocol> map)
     {
-        List<Node> lookedUpNodes = crawler.nodeLookupBegin(target, map, nowTime, this.node);
-        EDSimulator.add(nowTime+1, Event.NODE_LOOKUP_RESPONSE, target,this.node,new Payload(lookedUpNodes));
+        NetworkCrawler crawler = new NetworkCrawler(this.k,this.alpha,this);
+        List<Node> lookedUpNodes = crawler.nodeLookupBegin(target, map, nowTime);
+        EDSimulator.add(1, Event.NODE_LOOKUP_RESPONSE, null,this.node,new Payload(lookedUpNodes));
     }
 
-    public void rpcNodeLookUpResponse(List<Node> nodes)
-    {
-        System.out.print("Node lookup returned - ");
-        //System.out.println(lookedUpNodes.size());
-        for(Node n : nodes)
-        {
-            System.out.print(n.getId()+" ");
-        }
-        System.out.println();
-    }
     public void callRemoteStore(HashMap<BigInteger,Protocol> nodeToProtocolMap, BigInteger NodeToAsk,BigInteger key, String value)
     {
         //System.out.println("Call store sender " + this.node.getId()+" receiver " + NodeToAsk);
@@ -196,7 +195,7 @@ public class Protocol {
         {
             result.sender = new Node(NodeToAsk);
             //handleResponse(result,nodeToProtocolMap);
-            EDSimulator.add(nowTime+1,Event.STORE_RESPONSE,result.sender,result.target,result.payload);
+            EDSimulator.add(1,Event.STORE_RESPONSE,result.sender,result.target,result.payload);
         }
 
     }
@@ -208,10 +207,11 @@ public class Protocol {
         this.storage.setValue(key,value,0);
         //System.out.println("Stored: " + this.storage.getContentValue(key));
         //EDSimulator.add(5,Event.STORE_RESPONSE,this.node,sender,new Payload(key,value));
-        return new Event(nowTime+1,Event.STORE_RESPONSE,this.node,sender,new Payload(key,value,"OK"));
+        //System.out.println("Nowtime before store response - "+nowTime);
+        return new Event(1,Event.STORE_RESPONSE,this.node,sender,new Payload(key,value,"OK"));
     }
 
-    public boolean callPing(HashMap<BigInteger, Protocol> nodeToProtocolMap, BigInteger nodeIdToAsk) {
+    public boolean callPing(HashMap<BigInteger, Protocol> nodeToProtocolMap, BigInteger nodeIdToAsk, boolean external) {
         Protocol protocol = nodeToProtocolMap.getOrDefault(nodeIdToAsk, null);
         if(protocol==null)
         {
@@ -225,20 +225,27 @@ public class Protocol {
             result = protocol.rpcPingRequest(this.node);
         }
         // handle call response - function call
-        if (result != null) {
+        if (result != null ) {
             result.sender = new Node(nodeIdToAsk);
-            handleResponse(result,nodeToProtocolMap);
-            //EDSimulator.add(nowTime+1,Event.PING_RESPONSE,result.sender,result.target,result.payload);
+            if(external==false){
+                EDSimulator.add(1,result.type,result.sender,result.target,result.payload);
+            }
+            else {
+                result.type = Event.DEFAULT;
+                handleResponse(result,nodeToProtocolMap);
+            }
         }
         return true;
     }
-
+    public boolean callPing(HashMap<BigInteger, Protocol> nodeToProtocolMap, BigInteger nodeIdToAsk) {
+        return this.callPing(nodeToProtocolMap,nodeIdToAsk,false);
+    }
     public Event rpcPingRequest(Node sender) {
         // Welcome the sender if it's a new node
         this.welcomeIfNew(sender);
 
         // Reply with a PING_RESPONSE event
-        return new Event(nowTime+1, Event.PING_RESPONSE, this.node, sender, new Payload("OK"));
+        return new Event(1, Event.PING_RESPONSE, this.node, sender, new Payload("OK"));
     }
 
 
@@ -255,14 +262,13 @@ public class Protocol {
             return;
         }*/
         switch(event.type) {
+            case Event.DEFAULT,Event.PING_RESPONSE:
+                break;
             case Event.STORE_RESPONSE:
                 System.out.println("Node " + event.sender + " stored value " + event.payload.valueToStore);
                 break;
             case Event.RPC_FIND_NODE_RESPONSE:
                 System.out.println("Node " + event.sender.getId()+" returned " + event.payload.nodes.size()+" nodes");
-                break;
-            case Event.PING_RESPONSE:
-                System.out.println("Node " + event.target.getId() +" received ping response from " + event.sender.getId());
                 break;
         }
         //System.out.println(event.target.getId());
@@ -284,7 +290,7 @@ public class Protocol {
     /**
      * Called by simulator
      */
-    public void processEvent(Event event, NetworkCrawler crawler, HashMap<BigInteger, Protocol> map) {
+    public void processEvent(Event event,HashMap<BigInteger, Protocol> map) {
         nowTime = Math.max(nowTime,event.timestamp);
         switch (event.type) {
 
@@ -298,7 +304,7 @@ public class Protocol {
                 this.handleResponse(event,map);
                 break;
             case Event.NODE_LOOKUP_REQUEST:
-                this.rpcNodeLookUpRequest(crawler,event.target,map);
+                this.rpcNodeLookUpRequest(event.target,map);
                 break;
             case Event.STORE_REQUEST:
                 this.callRemoteStore(map,event.target.getId(),event.payload.keyToStore, event.payload.valueToStore);

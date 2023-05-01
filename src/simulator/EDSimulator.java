@@ -2,7 +2,6 @@ package simulator;
 
 import java.math.BigInteger;
 import java.util.*;
-
 import kademlia.*;
 
 public class EDSimulator {
@@ -12,20 +11,26 @@ public class EDSimulator {
 
     private EDSimulator() {} // prevent construction
 
+
     /**
      * Runs an experiment
      * @param nNodes - number of nodes
      * @param nBootstraps - number of bootstrap operations (< nNodes)
      */
-    public static void start(int nNodes, int nBootstraps, int bitSpace, int k) {
+    public static void start(int nNodes, int nBootstraps, int bitSpace, int k, int alpha) {
+
+
+
         // 1. Create nodes
         int createdNodes = 0;
         HashSet<BigInteger> nodeIds = new HashSet<>();
         // Increment seed and pass it as value to random constructor while constructing Config
         long seed = 30;
+
+
         while (createdNodes < nNodes) {
             // if our bit-space is small, it may clash, just loop until created as needed
-            Protocol protocol = new Protocol(new Config(bitSpace, k, new Random(seed++)));
+            Protocol protocol = new Protocol(new Config(bitSpace, k, new Random(seed++),k,alpha));
             Protocol prevProtocol = nodeIdToProtocol.putIfAbsent(protocol.node.id, protocol);
             if (prevProtocol == null) {
                 protocols.add(protocol);
@@ -34,47 +39,91 @@ public class EDSimulator {
             }
         }
 
-        Random random=new Random(seed++);
-        int randomNode=random.nextInt(nNodes-1)+1;
-        //System.out.println("Target node - " + protocols.get(randomNode));
-        Node targetForLookup = protocols.get(randomNode).node;
+        // 2.1 Bootstrap requests from each node to 'nBootstrap' random nodes
+
+        for(int i=1;i<nNodes;i++)
+        {
+            List<Integer> result = EDSimulator.getRandomNumbers(nBootstraps,i, seed++);
+            /*System.out.println("Indexes");
+            for(int n : result)
+            {
+                System.out.print(n+" ");
+            }
+            System.out.println();*/
+            List<Node> nodes = new ArrayList<>();
+            for(int index : result)
+            {
+                nodes.add(protocols.get(index).node);
+            }
+            /*System.out.println("Nodes to bootstrap");
+            for(Node n : nodes)
+            {
+                System.out.print(n.getId()+" ");
+            }
+            System.out.println();*/
+            EDSimulator.add(queue.size(), Event.BOOTSTRAP,protocols.get(i).node,null,new Payload(nodes));
+        }
 
 
-        // 2. Run bootstraps (fixed bootstrap node)
-        Node bootstrapNode = protocols.get(0).node;
-        NetworkCrawler crawler = new NetworkCrawler(k, 2, protocols.get((randomNode+1)%nNodes));
-        List<Node> arg = new ArrayList<>();
+        /*List<Node> arg = new ArrayList<>();
         arg.add(bootstrapNode);
         for (int i = 0; i < nBootstraps; i++) {
             Node eventSender = protocols.get(1+i).node; // sequential after bootstrap node
             EDSimulator.add(0, Event.BOOTSTRAP,eventSender , null, new Payload(arg));
-        }
-        EDSimulator.add(1,Event.RPC_FIND_NODE_REQUEST,protocols.get(4).node,bootstrapNode,new Payload(new Node(BigInteger.valueOf(1))));
-        BigInteger randomTarget = BigInteger.ZERO;
-        for(int i=0; i< Math.pow((double) 2, bitSpace);i++)
-        {
-            if(!nodeIds.contains(BigInteger.valueOf(i))) {
-                randomTarget = BigInteger.valueOf(i);
-                break;
-            }
-        }
-        testRemoteStore(bootstrapNode,randomNode);
-        //EDSimulator.add(queue.size()+1, Event.NODE_LOOKUP_REQUEST, null,protocols.get(randomNode).node,new Payload(protocols.get((randomNode+1)%nNodes).node));
-        //printEventQueue();
+        }*/
+
+        //EDSimulator.add(1,Event.PING_REQUEST,protocols.get(2).node,protocols.get(4).node,new Payload("PING"));
+        //testRemoteStore(bootstrapNode,randomNode);
+        //EDSimulator.add(1, Event.NODE_LOOKUP_REQUEST, protocols.get(1).node,protocols.get(randomNode).node,new Payload(protocols.get(randomNode).node));
+
         // perform the actual simulation
         boolean exit = false;
         while (!exit && queue.size()>0) {
-            exit = executeNext(crawler);
+            exit = executeNext();
         }
+    }
+    public static List<Integer> getRandomNumbers(int k, int n, long seed) {
+        if (k >= n) {
+            k = n;
+        }
+
+        List<Integer> numbers = new ArrayList<>();
+        for (int i = 0; i < n; i++) {
+            numbers.add(i);
+        }
+        Random random  = new Random(seed);
+        Collections.shuffle(numbers,random);
+        return numbers.subList(0, k);
+
+    }
+
+    public static boolean killNode(List<Node> nodes)
+    {
+        for(Node n : nodes){
+            BigInteger id = n.getId();
+            nodeIdToProtocol.remove(id);
+            Iterator<Protocol> it = protocols.iterator();
+            while(it.hasNext())
+            {
+                if(it.next().node == n)
+                {
+                    it.remove();
+                    break;
+                }
+            }
+            System.out.println("Node "+id+" left network");
+        }
+        return true;
     }
     public static void testRemoteStore(Node bootstrapNode,int randomNode)
     {
-        EDSimulator.add(queue.size()+1,Event.STORE_REQUEST,bootstrapNode,protocols.get(randomNode).node,new Payload(BigInteger.valueOf(4),"4"));
-        EDSimulator.add(queue.size()+1,Event.STORE_REQUEST,protocols.get(randomNode).node,bootstrapNode,new Payload(BigInteger.valueOf(60),"60"));
+        long nowTime = queue.size();
+        EDSimulator.add(nowTime,Event.STORE_REQUEST,bootstrapNode,protocols.get(randomNode).node,new Payload(BigInteger.valueOf(6),"6"));
+        EDSimulator.add(nowTime,Event.STORE_REQUEST,protocols.get(randomNode).node,new Node(BigInteger.valueOf(20)),new Payload(BigInteger.valueOf(60),"60"));
         //EDSimulator.add(queue.size()+1,Event.STORE_REQUEST,bootstrapNode,protocols.get(randomNode).node,new Payload(BigInteger.valueOf(70),"70"));
         //EDSimulator.add(queue.size()+1,Event.STORE_REQUEST,protocols.get(randomNode).node,bootstrapNode,new Payload(BigInteger.valueOf(80),"80"));
-        EDSimulator.add(queue.size()+1,Event.STORE_REQUEST,protocols.get(4).node,protocols.get(randomNode).node,new Payload(BigInteger.valueOf(90),"90"));
-        EDSimulator.add(queue.size()+1,Event.STORE_REQUEST,protocols.get(2).node,bootstrapNode,new Payload(BigInteger.valueOf(70),"70"));
+        EDSimulator.add(nowTime,Event.STORE_REQUEST,protocols.get(4).node,protocols.get(randomNode).node,new Payload(BigInteger.valueOf(10),"10"));
+        //EDSimulator.add(queue.size()+1,Event.STORE_REQUEST,protocols.get(2).node,bootstrapNode,new Payload(BigInteger.valueOf(70),"70"));
     }
     public static  void printEventQueue()
     {
@@ -82,8 +131,9 @@ public class EDSimulator {
         for(Event event : queue)
         {
             if(event.type == Event.STORE_REQUEST)
-                System.out.printf("event: %s | target: %s | sender: %s | payload: %s \n", event, event.target, event.sender, event.payload.keyToStore+","+event.payload.valueToStore);
-            else
+                System.out.println("event: " + event+" | target: " + event.target + " | sender: " + event.sender +" | payload: <" +
+                        event.payload.keyToStore+","+event.payload.valueToStore+">");
+            else if(event.type!= Event.KILL_NODE)
                 System.out.printf("event: %s | target: %s | sender: %s | payload: %s \n", event, event.target, event.sender, event.payload);
         }
     }
@@ -106,24 +156,38 @@ public class EDSimulator {
      * Execute and remove the next event from the ordered event list.
      * @return true if the execution should be stopped.
      */
-    private static boolean executeNext(NetworkCrawler crawler) {
-        Event event = null;
-        if(queue.size()>0)
-        {
-            event = queue.poll();
-        }
+    private static boolean executeNext() {
+        Event event = queue.poll();;
+
         if (event == null) { // should never happen
             return true;
         }
         CommonState.setTime(event.timestamp);
         System.out.printf("event: %s | target: %s | sender: %s | payload: %s \n", event, event.target, event.sender, event.payload);
+
+        if(event.type==Event.KILL_NODE)
+        {
+            EDSimulator.killNode(event.payload.nodes);
+            return false;
+        }
+        // REASON: Because lookup responses don't have a sender
+        if(event.type== Event.NODE_LOOKUP_RESPONSE)
+        {
+            return false;
+        }
         Protocol eventSender = EDSimulator.nodeIdToProtocol.getOrDefault(event.sender.id,null);
+        if(eventSender==null)
+        {
+            System.out.println("Sender " + event.sender +" does not exist in network");
+            return false;
+        }
+        // REASON : Because bootstrap events have no target
         if(event.type!= Event.BOOTSTRAP &&  nodeIdToProtocol.getOrDefault(event.target.id,null) == null)
         {
             System.out.println("Target node is not on network - " +event.target.id);
-            return true;
+            return false;
         }
-        eventSender.processEvent(event, crawler, nodeIdToProtocol);
+        eventSender.processEvent(event, nodeIdToProtocol);
         return queue.size() == 0;
     }
 

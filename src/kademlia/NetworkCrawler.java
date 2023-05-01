@@ -28,6 +28,8 @@ public class NetworkCrawler {
 
     HashMap<BigInteger, Protocol> nodeIdToProtocol;
 
+    public static boolean debugMode;
+
     public static long nowTime = 0;
     public NetworkCrawler(int k, int alpha, Protocol protocol)
     {
@@ -39,6 +41,7 @@ public class NetworkCrawler {
         this.count = alpha;
         this.lastCrawled = new ArrayList<>();
         this.protocol = protocol;
+        this.debugMode = false;
 
     }
     public static  boolean areListsEqual(List<Node> l1, List<Node> l2)
@@ -61,7 +64,7 @@ public class NetworkCrawler {
         return nodes;
     }
 
-    public List<Node> nodeLookupBegin(Node target, HashMap<BigInteger, Protocol> nodeProtocolMap, long nowTime,Node sender)
+    public List<Node> nodeLookupBegin(Node target, HashMap<BigInteger, Protocol> nodeProtocolMap, long nowTime)
     {
        /* nearestKNodes = getKNearest(globalList, target);
         PriorityQueue<Node> copyQueue = nearestKNodes;
@@ -80,7 +83,7 @@ public class NetworkCrawler {
         if(this.nodeIdToProtocol == null)
             this.nodeIdToProtocol = nodeProtocolMap;
 
-        int index = this.protocol.routingTable.getBucketIdxFor(target);
+        /*int index = this.protocol.routingTable.getBucketIdxFor(target);
         //System.out.println(this.protocol.node.getId()+" " +target+" " + index);
         KBucket bucket = this.protocol.routingTable.kBuckets.get(index);
 
@@ -94,13 +97,13 @@ public class NetworkCrawler {
             }
             System.out.println("---------");
         }*/
-        List<Node> initialKNearest = new ArrayList<>();
-        Iterator<Node> it = bucket.getNodes();
+        List<Node> initialKNearest = this.protocol.getRoutingTable().findNeighbors(target,this.node);
+        //Iterator<Node> it = bucket.getNodes();
 
-        while(it.hasNext())
+        /*while(it.hasNext())
         {
             initialKNearest.add(it.next());
-        }
+        }*/
         for(int i=0; i<initialKNearest.size();i++) {
 
             contactStatusMap.put(initialKNearest.get(i),"NOTCONTACTED");
@@ -111,21 +114,30 @@ public class NetworkCrawler {
     }
     public void printContactMap()
     {
+        if(!debugMode)
+            return;
         for(Map.Entry<Node,String> entry : contactStatusMap.entrySet())
         {
             System.out.println("Node - " + entry.getKey()+" Status - " + entry.getValue());
         }
         System.out.println("-----------------");
     }
+
+    public static void printKnearestList(List<Node> kNearestList)
+    {
+        if(!debugMode)
+            return;
+        System.out.println("K Nearest at this point");
+        for(Node n : kNearestList)
+        {
+            System.out.print(n.getId()+" ");
+        }
+        System.out.println("-----------------");
+    }
    public List<Node> nodeLookupRecursive(List<Node> kNearestList, Node target)
    {
        printContactMap();
-       /*System.out.println("Printing k nearest list");
-       for(int i=0;i<kNearestList.size();i++)
-       {
-           System.out.print(kNearestList.get(i)+" ");
-       }
-       System.out.println();*/
+       printKnearestList(kNearestList);
        if( areListsEqual(kNearestList, lastCrawled))
        {
            count = kNearestList.size();
@@ -134,7 +146,7 @@ public class NetworkCrawler {
 
        HashMap<Node, List<Node>> nearestReturned = new HashMap<>();
        int localCount = 0;
-       for(Node n : contactStatusMap.keySet())
+       for(Node n : kNearestList)
        {
            if(localCount< count) {
                if(contactStatusMap.get(n).equals("NOTCONTACTED"))
@@ -143,7 +155,7 @@ public class NetworkCrawler {
                    //System.out.println("Local count value - "+ localCount + " Node -" + n.getId());
                    //Send lookup message
                    //List<Node> newNodes = this.nodeIdToProtocol.get(n.getId()).routingTable.findNeighbors(target,null);
-                   List<Node> newNodes = this.protocol.callFindNode(nodeIdToProtocol,n,target.getId());
+                   List<Node> newNodes = this.protocol.callFindNode(nodeIdToProtocol,n,target.getId(),true);
                    //EDSimulator.add(nowTime+1, Event.RPC_FIND_NODE_REQUEST,this.node,n,new Payload(this.node));
                    contactStatusMap.put(n,"CONTACTED");
                    nearestReturned.put(n,newNodes);
@@ -182,8 +194,10 @@ public class NetworkCrawler {
        for(Map.Entry<Node, List<Node>> entry : nearestReturned.entrySet())
        {
 
-           if(toRemove.contains(entry.getKey()))
-               continue;
+           if(entry.getValue()==null)
+           {
+               toRemove.add(entry.getKey());
+           }
            else{
                nearestKNodes.addAll(entry.getValue());
            }
@@ -193,6 +207,15 @@ public class NetworkCrawler {
        nearestKNodes.removeAll(toRemove);
        // To prevent nodes being duplicated in k-nearest list
        ArrayList<Node> uniqueNodes = new ArrayList<>(new HashSet<>(nearestKNodes));
+       if(debugMode)
+       {
+           System.out.println("Unique nodes");
+           for(Node n : uniqueNodes)
+           {
+               System.out.print(n.getId()+" ");
+           }
+           System.out.println("----------");
+       }
        PriorityQueue<Node> updatedKNearest = getKNearest(uniqueNodes, target);
        for(Node n : updatedKNearest)
        {

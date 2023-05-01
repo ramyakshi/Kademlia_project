@@ -21,6 +21,10 @@ public class Event implements Comparable<Event> {
 
     public static final int PING_RESPONSE = 9;
 
+    public static final int DEFAULT = 10;
+
+    public static final int KILL_NODE = 11;
+
     public Node sender;
     public Node target;
     public Payload payload;
@@ -48,6 +52,9 @@ public class Event implements Comparable<Event> {
             case NODE_LOOKUP_RESPONSE -> "NODE_LOOKUP_RESPONSE";
             case STORE_REQUEST -> "STORE_REQUEST";
             case STORE_RESPONSE -> "STORE_RESPONSE";
+            case PING_REQUEST -> "PING_REQUEST";
+            case PING_RESPONSE -> "PING_RESPONSE";
+            case KILL_NODE -> "KILL_NODE";
             default -> "UNKNOWN";
         };
         return String.format("%d %s", this.timestamp, type);
