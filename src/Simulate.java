@@ -8,10 +8,10 @@ import java.util.Base64;
 
 public class Simulate {
     public static void main(String[] args) throws Exception{
-        PrintStream out = new PrintStream(new FileOutputStream("output.txt"));
-        System.setOut(out);
+        //PrintStream out = new PrintStream(new FileOutputStream("output.txt"));
+        //System.setOut(out);
         System.out.println("\n=== STARTING SIMULATION");
-        EDSimulator.start(20, 2, 6, 2, 1); // to test splitting buckets
+        EDSimulator.start(5, 2, 4, 1, 1); // to test splitting buckets
         System.out.println("\n=== PRINTING END STATE");
         EDSimulator.printEndState();
         //System.out.print(Util.digest(BigInteger.valueOf(1)));

@@ -11,7 +11,6 @@ public class EDSimulator {
 
     private EDSimulator() {} // prevent construction
 
-
     /**
      * Runs an experiment
      * @param nNodes - number of nodes
@@ -73,7 +72,8 @@ public class EDSimulator {
         }*/
 
         //EDSimulator.add(1,Event.PING_REQUEST,protocols.get(2).node,protocols.get(4).node,new Payload("PING"));
-        //testRemoteStore(bootstrapNode,randomNode);
+        testRemoteStore(protocols.get(2).node,0);
+        EDSimulator.add(queue.size(), Event.RPC_FIND_VAL_REQUEST,protocols.get(2).node,protocols.get(3).node,new Payload(BigInteger.valueOf(5),null));
         //EDSimulator.add(1, Event.NODE_LOOKUP_REQUEST, protocols.get(1).node,protocols.get(randomNode).node,new Payload(protocols.get(randomNode).node));
 
         // perform the actual simulation
@@ -131,8 +131,11 @@ public class EDSimulator {
         for(Event event : queue)
         {
             if(event.type == Event.STORE_REQUEST)
-                System.out.println("event: " + event+" | target: " + event.target + " | sender: " + event.sender +" | payload: <" +
-                        event.payload.keyToStore+","+event.payload.valueToStore+">");
+            {
+                System.out.println(event.payload.keyToStore);
+                //System.out.println("event: " + event+" | target: " + event.target + " | sender: " + event.sender +" | payload: <" +
+                       // event.payload.keyToStore.toString()+","+event.payload.valueToStore+">");
+            }
             else if(event.type!= Event.KILL_NODE)
                 System.out.printf("event: %s | target: %s | sender: %s | payload: %s \n", event, event.target, event.sender, event.payload);
         }
@@ -163,8 +166,19 @@ public class EDSimulator {
             return true;
         }
         CommonState.setTime(event.timestamp);
-        System.out.printf("event: %s | target: %s | sender: %s | payload: %s \n", event, event.target, event.sender, event.payload);
-
+        if(event.type == Event.STORE_REQUEST)
+        {
+            System.out.println("event: " + event+" | target: " + event.target + " | sender: " + event.sender +" | payload: <" +
+                    event.payload.keyToStore.toString()+","+event.payload.valueToStore+">");
+        }
+        else if(event.type!= Event.KILL_NODE) {
+            System.out.printf("event: %s | target: %s | sender: %s | payload: %s \n", event, event.target, event.sender, event.payload);
+        }
+        else if(event.type == Event.RPC_FIND_VAL_REQUEST){
+            System.out.println("event: " + event+" | target: " + event.target + " | sender: " + event.sender +" | payload: " +
+                    event.payload.keyToStore.toString());
+        }
+        //REASON: Because kill nodes should not be a protocol event
         if(event.type==Event.KILL_NODE)
         {
             EDSimulator.killNode(event.payload.nodes);
@@ -203,20 +217,4 @@ public class EDSimulator {
         queue.add(event);
     }
 
-
-    public static void checkFindNeighbors()
-    {
-        /*for(int i=0;i<protocols.size();i++)
-        {
-            System.out.println(protocols.get(i).node.getId());
-        }*/
-        System.out.println("Calling FN for node - " + protocols.get(3
-        ).node.getId());
-        List<Node> nodes = nodeIdToProtocol.get(BigInteger.valueOf(2)).routingTable.findNeighbors(protocols.get(3).node,null);
-
-        for(int i=0;i<nodes.size();i++)
-        {
-            System.out.println(nodes.get(i).getId());
-        }
-    }
 }

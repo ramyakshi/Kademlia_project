@@ -1,405 +1,69 @@
 
 === STARTING SIMULATION
-Indexes
-0 
-Nodes to bootstrap
-45 
-Indexes
-0 1 
-Nodes to bootstrap
-45 0 
-Indexes
-1 0 
-Nodes to bootstrap
-0 45 
-Indexes
-1 0 
-Nodes to bootstrap
-0 45 
-Indexes
-4 2 
-Nodes to bootstrap
-29 3 
-Indexes
-2 0 
-Nodes to bootstrap
-3 45 
-Indexes
-1 5 
-Nodes to bootstrap
-0 48 
-Indexes
-3 4 
-Nodes to bootstrap
-22 29 
-Indexes
-3 2 
-Nodes to bootstrap
-22 3 
-Indexes
-9 3 
-Nodes to bootstrap
-60 22 
-Indexes
-2 1 
-Nodes to bootstrap
-3 0 
-Indexes
-7 9 
-Nodes to bootstrap
-34 60 
-Indexes
-0 2 
-Nodes to bootstrap
-45 3 
-Indexes
-10 13 
-Nodes to bootstrap
-28 8 
-Indexes
-10 12 
-Nodes to bootstrap
-28 53 
-Indexes
-3 7 
-Nodes to bootstrap
-22 34 
-Indexes
-3 4 
-Nodes to bootstrap
-22 29 
-Indexes
-10 2 
-Nodes to bootstrap
-28 3 
-Indexes
-12 18 
-Nodes to bootstrap
-53 17 
-event: 0 BOOTSTRAP | target: null | sender: 0 | payload: [45] 
-Node 45 received FIND_NODE request from 0 for target 0
-event: 1 BOOTSTRAP | target: null | sender: 3 | payload: [45, 0] 
+event: 0 BOOTSTRAP | target: null | sender: 0 | payload: [13] 
+Node 13 received FIND_NODE request from 0 for target 0
+event: 1 BOOTSTRAP | target: null | sender: 3 | payload: [13, 0] 
 Node 0 received FIND_NODE request from 3 for target 3
-Node 45 received FIND_NODE request from 3 for target 3
-event: 2 BOOTSTRAP | target: null | sender: 22 | payload: [0, 45] 
-Node 0 received FIND_NODE request from 22 for target 22
-Node 45 received FIND_NODE request from 22 for target 22
-Node 3 received FIND_NODE request from 22 for target 22
-event: 3 BOOTSTRAP | target: null | sender: 29 | payload: [0, 45] 
-Node 0 received FIND_NODE request from 29 for target 29
-Node 45 received FIND_NODE request from 29 for target 29
-Node 22 received FIND_NODE request from 29 for target 29
-event: 4 BOOTSTRAP | target: null | sender: 48 | payload: [29, 3] 
-Node 29 received FIND_NODE request from 48 for target 48
-Node 3 received FIND_NODE request from 48 for target 48
-Node 45 received FIND_NODE request from 48 for target 48
-Node 22 received FIND_NODE request from 48 for target 48
-event: 5 BOOTSTRAP | target: null | sender: 15 | payload: [3, 45] 
-Node 3 received FIND_NODE request from 15 for target 15
-Node 45 received FIND_NODE request from 15 for target 15
-Node 0 received FIND_NODE request from 15 for target 15
-event: 6 BOOTSTRAP | target: null | sender: 34 | payload: [0, 48] 
-Node 48 received FIND_NODE request from 34 for target 34
-Node 0 received FIND_NODE request from 34 for target 34
-Node 45 received FIND_NODE request from 34 for target 34
-event: 7 BOOTSTRAP | target: null | sender: 41 | payload: [22, 29] 
-Node 29 received FIND_NODE request from 41 for target 41
-Node 22 received FIND_NODE request from 41 for target 41
-Node 0 received FIND_NODE request from 41 for target 41
-Node 45 received FIND_NODE request from 41 for target 41
-Node 34 received FIND_NODE request from 41 for target 41
-event: 8 BOOTSTRAP | target: null | sender: 60 | payload: [22, 3] 
-Node 22 received FIND_NODE request from 60 for target 60
-Node 3 received FIND_NODE request from 60 for target 60
-Node 45 received FIND_NODE request from 60 for target 60
-Node 48 received FIND_NODE request from 60 for target 60
-event: 9 BOOTSTRAP | target: null | sender: 28 | payload: [60, 22] 
-Node 22 received FIND_NODE request from 28 for target 28
-Node 60 received FIND_NODE request from 28 for target 28
-Node 29 received FIND_NODE request from 28 for target 28
-event: 10 BOOTSTRAP | target: null | sender: 47 | payload: [3, 0] 
-Node 3 received FIND_NODE request from 47 for target 47
-Node 0 received FIND_NODE request from 47 for target 47
-Node 41 received FIND_NODE request from 47 for target 47
-Node 45 received FIND_NODE request from 47 for target 47
-event: 11 BOOTSTRAP | target: null | sender: 53 | payload: [34, 60] 
-Node 60 received FIND_NODE request from 53 for target 53
-Node 34 received FIND_NODE request from 53 for target 53
-Node 48 received FIND_NODE request from 53 for target 53
-event: 12 BOOTSTRAP | target: null | sender: 8 | payload: [45, 3] 
-Node 3 received FIND_NODE request from 8 for target 8
-Node 45 received FIND_NODE request from 8 for target 8
-Node 0 received FIND_NODE request from 8 for target 8
-Node 15 received FIND_NODE request from 8 for target 8
-event: 13 BOOTSTRAP | target: null | sender: 40 | payload: [28, 8] 
-Node 8 received FIND_NODE request from 40 for target 40
-Node 28 received FIND_NODE request from 40 for target 40
-Node 60 received FIND_NODE request from 40 for target 40
-Node 45 received FIND_NODE request from 40 for target 40
-Node 41 received FIND_NODE request from 40 for target 40
-event: 14 BOOTSTRAP | target: null | sender: 59 | payload: [28, 53] 
-Node 53 received FIND_NODE request from 59 for target 59
-Node 28 received FIND_NODE request from 59 for target 59
-Node 48 received FIND_NODE request from 59 for target 59
-Node 60 received FIND_NODE request from 59 for target 59
-event: 15 BOOTSTRAP | target: null | sender: 2 | payload: [22, 34] 
-Node 22 received FIND_NODE request from 2 for target 2
-Node 34 received FIND_NODE request from 2 for target 2
-Node 0 received FIND_NODE request from 2 for target 2
-Node 3 received FIND_NODE request from 2 for target 2
-event: 16 BOOTSTRAP | target: null | sender: 21 | payload: [22, 29] 
-Node 22 received FIND_NODE request from 21 for target 21
-Node 29 received FIND_NODE request from 21 for target 21
-event: 17 BOOTSTRAP | target: null | sender: 17 | payload: [28, 3] 
-Node 28 received FIND_NODE request from 17 for target 17
-Node 3 received FIND_NODE request from 17 for target 17
-Node 22 received FIND_NODE request from 17 for target 17
-Node 21 received FIND_NODE request from 17 for target 17
-event: 18 BOOTSTRAP | target: null | sender: 36 | payload: [53, 17] 
-Node 53 received FIND_NODE request from 36 for target 36
-Node 17 received FIND_NODE request from 36 for target 36
-Node 34 received FIND_NODE request from 36 for target 36
+event: 2 BOOTSTRAP | target: null | sender: 6 | payload: [3, 13] 
+Node 3 received FIND_NODE request from 6 for target 6
+event: 3 BOOTSTRAP | target: null | sender: 15 | payload: [6, 13] 
+Node 13 received FIND_NODE request from 15 for target 15
+event: 4 STORE_REQUEST | target: 13 | sender: 15 | payload:  
+Sender is - 15 Receiver is - 13
+event: 4 STORE_REQUEST | target: 20 | sender: 13 | payload:  
+Target node is not on network - 20
+event: 4 STORE_REQUEST | target: 13 | sender: 3 | payload:  
+Sender is - 3 Receiver is - 13
+event: 5 STORE_RESPONSE | target: 15 | sender: 13 | payload:  
+Node 13 stored value 10
+event: 5 STORE_RESPONSE | target: 3 | sender: 13 | payload:  
+Node 13 stored value 6
 
 === PRINTING END STATE
-Node 45 
-Key-value pairs stored on 45
+Node 13 
+Key-value pairs stored on 13
+<6, 6>
+<10, 10>
 --------
--> kBucket range: 0 - 7 | depth: 3
---> nodes: 0 3 
--> kBucket range: 8 - 15 | depth: 3
---> nodes: 15 8 
--> kBucket range: 16 - 31 | depth: 2
---> nodes: 22 29 
--> kBucket range: 32 - 39 | depth: 3
---> nodes: 34 
--> kBucket range: 40 - 43 | depth: 4
---> nodes: 41 40 
--> kBucket range: 44 - 47 | depth: 4
---> nodes: 47 
--> kBucket range: 48 - 63 | depth: 2
---> nodes: 48 60 
+-> kBucket range: 0 - 1 | depth: 3
+--> nodes: 0 
+-> kBucket range: 2 - 3 | depth: 3
+--> nodes: 3 
+-> kBucket range: 4 - 7 | depth: 2
+--> nodes: 6 
+-> kBucket range: 8 - 15 | depth: 1
+--> nodes: 15 
 Node 0 
 Key-value pairs stored on 0
 --------
--> kBucket range: 0 - 7 | depth: 3
---> nodes: 3 2 
--> kBucket range: 8 - 15 | depth: 3
---> nodes: 15 8 
--> kBucket range: 16 - 31 | depth: 2
---> nodes: 22 29 
--> kBucket range: 32 - 39 | depth: 3
---> nodes: 34 
--> kBucket range: 40 - 43 | depth: 4
---> nodes: 41 
--> kBucket range: 44 - 47 | depth: 4
---> nodes: 45 47 
--> kBucket range: 48 - 63 | depth: 2
---> nodes: 
+-> kBucket range: 0 - 7 | depth: 1
+--> nodes: 3 
+-> kBucket range: 8 - 15 | depth: 1
+--> nodes: 13 
 Node 3 
 Key-value pairs stored on 3
 --------
--> kBucket range: 0 - 7 | depth: 3
---> nodes: 0 2 
--> kBucket range: 8 - 15 | depth: 3
---> nodes: 15 8 
--> kBucket range: 16 - 31 | depth: 2
---> nodes: 22 17 
--> kBucket range: 32 - 47 | depth: 2
---> nodes: 45 47 
--> kBucket range: 48 - 63 | depth: 2
---> nodes: 48 60 
-Node 22 
-Key-value pairs stored on 22
---------
--> kBucket range: 0 - 1 | depth: 5
+-> kBucket range: 0 - 3 | depth: 2
 --> nodes: 0 
--> kBucket range: 2 - 3 | depth: 5
---> nodes: 3 2 
--> kBucket range: 4 - 7 | depth: 4
---> nodes: 
--> kBucket range: 8 - 15 | depth: 3
---> nodes: 
--> kBucket range: 16 - 23 | depth: 3
---> nodes: 21 17 
--> kBucket range: 24 - 31 | depth: 3
---> nodes: 29 28 
--> kBucket range: 32 - 47 | depth: 2
---> nodes: 45 41 
--> kBucket range: 48 - 63 | depth: 2
---> nodes: 48 60 
-Node 29 
-Key-value pairs stored on 29
+-> kBucket range: 4 - 7 | depth: 2
+--> nodes: 6 
+-> kBucket range: 8 - 15 | depth: 1
+--> nodes: 13 
+Node 6 
+Key-value pairs stored on 6
 --------
--> kBucket range: 0 - 15 | depth: 2
---> nodes: 0 
--> kBucket range: 16 - 23 | depth: 3
---> nodes: 22 21 
--> kBucket range: 24 - 31 | depth: 3
---> nodes: 28 
--> kBucket range: 32 - 47 | depth: 2
---> nodes: 45 41 
--> kBucket range: 48 - 63 | depth: 2
---> nodes: 48 
-Node 48 
-Key-value pairs stored on 48
---------
--> kBucket range: 0 - 15 | depth: 2
+-> kBucket range: 0 - 7 | depth: 1
 --> nodes: 3 
--> kBucket range: 16 - 31 | depth: 2
---> nodes: 29 22 
--> kBucket range: 32 - 47 | depth: 2
---> nodes: 45 34 
--> kBucket range: 48 - 55 | depth: 3
---> nodes: 53 
--> kBucket range: 56 - 63 | depth: 3
---> nodes: 60 59 
+-> kBucket range: 8 - 11 | depth: 2
+--> nodes: 
+-> kBucket range: 12 - 13 | depth: 3
+--> nodes: 13 
+-> kBucket range: 14 - 15 | depth: 3
+--> nodes: 15 
 Node 15 
 Key-value pairs stored on 15
 --------
--> kBucket range: 0 - 7 | depth: 3
---> nodes: 3 0 
--> kBucket range: 8 - 15 | depth: 3
---> nodes: 8 
--> kBucket range: 16 - 31 | depth: 2
---> nodes: 
--> kBucket range: 32 - 63 | depth: 1
---> nodes: 45 
-Node 34 
-Key-value pairs stored on 34
---------
--> kBucket range: 0 - 31 | depth: 1
---> nodes: 0 2 
--> kBucket range: 32 - 39 | depth: 3
---> nodes: 36 
--> kBucket range: 40 - 47 | depth: 3
---> nodes: 45 41 
--> kBucket range: 48 - 63 | depth: 2
---> nodes: 48 53 
-Node 41 
-Key-value pairs stored on 41
---------
--> kBucket range: 0 - 15 | depth: 2
---> nodes: 0 
--> kBucket range: 16 - 31 | depth: 2
---> nodes: 22 29 
--> kBucket range: 32 - 39 | depth: 3
---> nodes: 34 
--> kBucket range: 40 - 43 | depth: 4
---> nodes: 40 
--> kBucket range: 44 - 47 | depth: 4
---> nodes: 45 47 
--> kBucket range: 48 - 63 | depth: 2
---> nodes: 
-Node 60 
-Key-value pairs stored on 60
---------
--> kBucket range: 0 - 15 | depth: 2
---> nodes: 3 
--> kBucket range: 16 - 31 | depth: 2
---> nodes: 22 28 
--> kBucket range: 32 - 47 | depth: 2
---> nodes: 45 40 
--> kBucket range: 48 - 55 | depth: 3
---> nodes: 48 53 
--> kBucket range: 56 - 63 | depth: 3
---> nodes: 59 
-Node 28 
-Key-value pairs stored on 28
---------
--> kBucket range: 0 - 15 | depth: 2
---> nodes: 
--> kBucket range: 16 - 23 | depth: 3
---> nodes: 22 17 
--> kBucket range: 24 - 31 | depth: 3
---> nodes: 29 
--> kBucket range: 32 - 47 | depth: 2
---> nodes: 40 
--> kBucket range: 48 - 63 | depth: 2
---> nodes: 60 59 
-Node 47 
-Key-value pairs stored on 47
---------
--> kBucket range: 0 - 31 | depth: 1
---> nodes: 3 0 
--> kBucket range: 32 - 63 | depth: 1
---> nodes: 41 45 
-Node 53 
-Key-value pairs stored on 53
---------
--> kBucket range: 0 - 31 | depth: 1
---> nodes: 
--> kBucket range: 32 - 47 | depth: 2
---> nodes: 34 36 
--> kBucket range: 48 - 55 | depth: 3
---> nodes: 48 
--> kBucket range: 56 - 63 | depth: 3
---> nodes: 60 59 
-Node 8 
-Key-value pairs stored on 8
---------
--> kBucket range: 0 - 7 | depth: 3
---> nodes: 3 0 
--> kBucket range: 8 - 15 | depth: 3
---> nodes: 15 
--> kBucket range: 16 - 31 | depth: 2
---> nodes: 
--> kBucket range: 32 - 63 | depth: 1
---> nodes: 45 40 
-Node 40 
-Key-value pairs stored on 40
---------
--> kBucket range: 0 - 31 | depth: 1
---> nodes: 28 8 
--> kBucket range: 32 - 47 | depth: 2
---> nodes: 45 41 
--> kBucket range: 48 - 63 | depth: 2
---> nodes: 60 
-Node 59 
-Key-value pairs stored on 59
---------
--> kBucket range: 0 - 31 | depth: 1
---> nodes: 28 
--> kBucket range: 32 - 47 | depth: 2
---> nodes: 
--> kBucket range: 48 - 55 | depth: 3
---> nodes: 53 48 
--> kBucket range: 56 - 63 | depth: 3
---> nodes: 60 
-Node 2 
-Key-value pairs stored on 2
---------
--> kBucket range: 0 - 15 | depth: 2
---> nodes: 0 3 
--> kBucket range: 16 - 31 | depth: 2
---> nodes: 22 
--> kBucket range: 32 - 63 | depth: 1
---> nodes: 34 
-Node 21 
-Key-value pairs stored on 21
---------
--> kBucket range: 0 - 15 | depth: 2
---> nodes: 
--> kBucket range: 16 - 23 | depth: 3
---> nodes: 22 17 
--> kBucket range: 24 - 31 | depth: 3
---> nodes: 29 
--> kBucket range: 32 - 63 | depth: 1
---> nodes: 
-Node 17 
-Key-value pairs stored on 17
---------
--> kBucket range: 0 - 15 | depth: 2
---> nodes: 3 
--> kBucket range: 16 - 23 | depth: 3
---> nodes: 22 21 
--> kBucket range: 24 - 31 | depth: 3
---> nodes: 28 
--> kBucket range: 32 - 63 | depth: 1
---> nodes: 36 
-Node 36 
-Key-value pairs stored on 36
---------
--> kBucket range: 0 - 31 | depth: 1
---> nodes: 17 
--> kBucket range: 32 - 63 | depth: 1
---> nodes: 53 34 
+-> kBucket range: 0 - 7 | depth: 1
+--> nodes: 6 
+-> kBucket range: 8 - 15 | depth: 1
+--> nodes: 13 

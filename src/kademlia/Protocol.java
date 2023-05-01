@@ -77,6 +77,53 @@ public class Protocol {
     /**
      * This node received a FIND_NODE request
      */
+    public Payload callFindValue(HashMap<BigInteger, Protocol> nodeToProtocolMap, Node nodeToAsk, BigInteger targetId, boolean external) {
+        Protocol protocol = nodeToProtocolMap.getOrDefault(nodeToAsk.getId(), null);
+        Event result = null;
+        if (protocol == null) {
+            RoutingTable table = this.getRoutingTable();
+            table.removeContact(nodeToAsk);
+            System.out.println("Protocol with id - " + nodeToAsk + " does not exist");
+            return null;
+        }
+
+        if (protocol != null) {
+            result = protocol.rpcFindValueRequest(this.node, targetId);
+        }
+
+        if (result != null) {
+            if (external == false) {
+                EDSimulator.add(1, Event.RPC_FIND_VAL_RESPONSE, result.sender, result.target, result.payload);
+            } else {
+                result.type = Event.DEFAULT;
+                this.handleResponse(result, nodeToProtocolMap);
+            }
+        }
+        return result.payload;
+    }
+
+    public Payload callFindValue(HashMap<BigInteger, Protocol> nodeToProtocolMap, Node nodeToAsk, BigInteger targetId) {
+        return this.callFindValue(nodeToProtocolMap,nodeToAsk,targetId,false);
+    }
+
+    public Event rpcFindValueRequest(Node sender, BigInteger targetId) {
+        this.welcomeIfNew(sender);
+        System.out.println("Node " + this.node.getId() + " received FIND_VALUE request from " + sender.getId() + " for target " + targetId);
+
+        // Check if this node has the value associated with the targetId
+        String value = this.storage.getContentValue(targetId);
+
+        if (value != null) {
+            System.out.println("Node " + this.node.getId() + " has the value for target " + targetId);
+            Payload payload = new Payload(targetId, value);
+            return new Event(1, Event.RPC_FIND_VAL_RESPONSE, this.node, sender, payload);
+        } else {
+            // If value is not found, return the K closest nodes
+            List<Node> foundNodes = this.routingTable.findNeighbors(new Node(targetId), sender);
+            Payload payload = new Payload(foundNodes);
+            return new Event(1, Event.RPC_FIND_NODE_RESPONSE, this.node, sender, payload);
+        }
+    }
     public List<Node> callFindNode(HashMap<BigInteger, Protocol> nodeToProtocolMap, Node nodeToAsk, BigInteger targetId, boolean external) {
         Protocol protocol = nodeToProtocolMap.getOrDefault(nodeToAsk.getId(), null);
         Event result = null;
@@ -105,6 +152,7 @@ public class Protocol {
         }
         return result.payload.nodes;
     }
+
     public List<Node> callFindNode(HashMap<BigInteger, Protocol> nodeToProtocolMap, Node nodeToAsk, BigInteger targetId) {
         return this.callFindNode(nodeToProtocolMap,nodeToAsk,targetId,false);
     }
@@ -270,6 +318,14 @@ public class Protocol {
             case Event.RPC_FIND_NODE_RESPONSE:
                 System.out.println("Node " + event.sender.getId()+" returned " + event.payload.nodes.size()+" nodes");
                 break;
+            case Event.RPC_FIND_VAL_RESPONSE:
+                if(event.payload.keyToStore!=null)
+                {
+                    System.out.println("Value " + event.payload.valueToStore +" was found at Node "+event.sender);
+                }
+                else if(event.payload.nodes!=null){
+                    System.out.println("Node " + event.sender.getId()+" returned " + event.payload.nodes.size()+" nodes");
+                }
         }
         //System.out.println(event.target.getId());
         Protocol protocol = nodeToProtocolMap.get(event.target.getId());
@@ -300,7 +356,7 @@ public class Protocol {
             case Event.RPC_FIND_NODE_REQUEST:
                 this.callFindNode(map,event.target, event.payload.node.getId());
                 break;
-            case Event.RPC_FIND_NODE_RESPONSE, Event.STORE_RESPONSE, Event.PING_RESPONSE:
+            case Event.RPC_FIND_NODE_RESPONSE, Event.STORE_RESPONSE, Event.PING_RESPONSE, Event.RPC_FIND_VAL_RESPONSE:
                 this.handleResponse(event,map);
                 break;
             case Event.NODE_LOOKUP_REQUEST:
@@ -311,6 +367,9 @@ public class Protocol {
                 break;
             case Event.PING_REQUEST:
                 this.callPing(map,event.target.getId());
+                break;
+            case Event.RPC_FIND_VAL_REQUEST:
+                this.callFindValue(map,event.target,event.payload.keyToStore);
                 break;
         }
     }

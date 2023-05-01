@@ -25,6 +25,10 @@ public class Event implements Comparable<Event> {
 
     public static final int KILL_NODE = 11;
 
+    public static final int RPC_FIND_VAL_REQUEST = 12;
+
+    public static final int RPC_FIND_VAL_RESPONSE = 13;
+
     public Node sender;
     public Node target;
     public Payload payload;
@@ -55,6 +59,8 @@ public class Event implements Comparable<Event> {
             case PING_REQUEST -> "PING_REQUEST";
             case PING_RESPONSE -> "PING_RESPONSE";
             case KILL_NODE -> "KILL_NODE";
+            case RPC_FIND_VAL_REQUEST -> "RPC_FIND_VAL_REQUEST";
+            case RPC_FIND_VAL_RESPONSE -> "RPC_FIND_VAL_RESPONSE";
             default -> "UNKNOWN";
         };
         return String.format("%d %s", this.timestamp, type);
