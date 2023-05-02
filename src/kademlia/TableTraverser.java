@@ -29,7 +29,6 @@ class TableTraverserIterator<T> implements Iterator<T> {
         this.leftBuckets = traverser.routingTable.kBuckets.subList(0, idx);
         this.rightBuckets = traverser.routingTable.kBuckets.subList(idx+1, traverser.routingTable.kBuckets.size());
     }
-
     public boolean hasNext() {
         return this.currentNodes.hasNext() || !this.leftBuckets.isEmpty() || !this.rightBuckets.isEmpty();
     }
