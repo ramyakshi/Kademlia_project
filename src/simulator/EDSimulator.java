@@ -77,14 +77,15 @@ public class EDSimulator {
         }
 
         //Reproduce error
-        EDSimulator.printRoutingTable(protocols.get(6).node);
-        List<Node> nodes = protocols.get(6).getRoutingTable().findNeighbors(new Node(BigInteger.valueOf(9)),protocols.get(6).node);
-        System.out.println("Findneighbors returned");
-        for(Node n : nodes)
-        {
-            System.out.print(n.getId()+" ");
-        }
-        System.out.println();
+//        System.out.println("ERROR LINE START");
+//        EDSimulator.printRoutingTable(protocols.get(6).node);
+//        List<Node> nodes = protocols.get(6).getRoutingTable().findNeighbors(new Node(BigInteger.valueOf(9)),protocols.get(6).node);
+//        System.out.println("Findneighbors returned");
+//        for(Node n : nodes)
+//        {
+//            System.out.print(n.getId()+" ");
+//        }
+//        System.out.println();
     }
     public static List<Integer> getRandomNumbers(int k, int n, long seed) {
         if (k >= n) {
