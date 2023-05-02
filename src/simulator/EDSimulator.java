@@ -63,17 +63,11 @@ public class EDSimulator {
             EDSimulator.add(queue.size(), Event.BOOTSTRAP,protocols.get(i).node,null,new Payload(nodes));
         }
 
-
-        /*List<Node> arg = new ArrayList<>();
-        arg.add(bootstrapNode);
-        for (int i = 0; i < nBootstraps; i++) {
-            Node eventSender = protocols.get(1+i).node; // sequential after bootstrap node
-            EDSimulator.add(0, Event.BOOTSTRAP,eventSender , null, new Payload(arg));
-        }*/
-
         //EDSimulator.add(1,Event.PING_REQUEST,protocols.get(2).node,protocols.get(4).node,new Payload("PING"));
-        testRemoteStore(protocols.get(2).node,0);
-        EDSimulator.add(queue.size(), Event.RPC_FIND_VAL_REQUEST,protocols.get(2).node,protocols.get(3).node,new Payload(BigInteger.valueOf(5),null));
+        //EDSimulator.add(queue.size(), Event.STORE_REQUEST,protocols.get(0).node,protocols.get(3).node,new Payload(BigInteger.valueOf(7),"7"));
+        //EDSimulator.add(queue.size(), Event.VALUE_LOOKUP_REQUEST,protocols.get(6).node,null,new Payload(new Node(BigInteger.valueOf(9))));
+        //testRemoteStore(protocols.get(2).node,0);
+        //EDSimulator.add(queue.size(), Event.RPC_FIND_VAL_REQUEST,protocols.get(2).node,protocols.get(3).node,new Payload(BigInteger.valueOf(5),null));
         //EDSimulator.add(1, Event.NODE_LOOKUP_REQUEST, protocols.get(1).node,protocols.get(randomNode).node,new Payload(protocols.get(randomNode).node));
 
         // perform the actual simulation
@@ -81,6 +75,16 @@ public class EDSimulator {
         while (!exit && queue.size()>0) {
             exit = executeNext();
         }
+
+        //Reproduce error
+        EDSimulator.printRoutingTable(protocols.get(6).node);
+        List<Node> nodes = protocols.get(6).getRoutingTable().findNeighbors(new Node(BigInteger.valueOf(9)),protocols.get(6).node);
+        System.out.println("Findneighbors returned");
+        for(Node n : nodes)
+        {
+            System.out.print(n.getId()+" ");
+        }
+        System.out.println();
     }
     public static List<Integer> getRandomNumbers(int k, int n, long seed) {
         if (k >= n) {
@@ -155,6 +159,25 @@ public class EDSimulator {
         }
     }
 
+    public static void printRoutingTable(Node n) {
+        System.out.println("Printing routing table for Node " + n.getId());
+        for (Protocol protocol : protocols) {
+            if(!protocol.node.getId().equals(n.getId()))
+                continue;
+            System.out.printf("Node %s \n", protocol.node);
+            protocol.printStorage();
+            for (KBucket kBucket : protocol.routingTable.kBuckets) {
+                System.out.printf("-> kBucket range: %s - %s | depth: %d\n", kBucket.rangeLower, kBucket.rangeUpper, kBucket.depth());
+                System.out.printf("--> nodes: ");
+                for (BigInteger nodeId : kBucket.nodes.keySet()) {
+                    System.out.printf("%s ", nodeId);
+                }
+                System.out.printf("\n");
+            }
+        }
+    }
+
+
     /**
      * Execute and remove the next event from the ordered event list.
      * @return true if the execution should be stopped.
@@ -185,7 +208,7 @@ public class EDSimulator {
             return false;
         }
         // REASON: Because lookup responses don't have a sender
-        if(event.type== Event.NODE_LOOKUP_RESPONSE)
+        if(event.type== Event.NODE_LOOKUP_RESPONSE || event.type == Event.VALUE_LOOKUP_RESPONSE)
         {
             return false;
         }
@@ -196,7 +219,8 @@ public class EDSimulator {
             return false;
         }
         // REASON : Because bootstrap events have no target
-        if(event.type!= Event.BOOTSTRAP &&  nodeIdToProtocol.getOrDefault(event.target.id,null) == null)
+        if((event.type!= Event.BOOTSTRAP && event.type!=Event.VALUE_LOOKUP_REQUEST && event.type!= Event.NODE_LOOKUP_REQUEST)
+                &&  nodeIdToProtocol.getOrDefault(event.target.id,null) == null)
         {
             System.out.println("Target node is not on network - " +event.target.id);
             return false;

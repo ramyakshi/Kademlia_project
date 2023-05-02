@@ -69,6 +69,10 @@ public class RoutingTable {
         PriorityQueue<Node> nodes = new PriorityQueue<>(1, comparator);
 
         for (Node neighbor : new TableTraverser<Node>(this, node)) {
+            /*if(exclude!=null && exclude.getId().equals(BigInteger.valueOf(9)))
+            {   // FOR DEBUGGING
+                System.out.print("N: "+neighbor.getId()+" ");
+            }*/
             if (neighbor.id.equals(node.id) || (exclude != null && neighbor.id.equals(exclude.id))) {
                 continue;
             }

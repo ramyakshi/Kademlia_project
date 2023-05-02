@@ -29,6 +29,10 @@ public class Event implements Comparable<Event> {
 
     public static final int RPC_FIND_VAL_RESPONSE = 13;
 
+    public static final int VALUE_LOOKUP_REQUEST = 14;
+
+    public static final int VALUE_LOOKUP_RESPONSE = 15;
+
     public Node sender;
     public Node target;
     public Payload payload;
@@ -54,6 +58,8 @@ public class Event implements Comparable<Event> {
             case RPC_FIND_NODE_RESPONSE -> "RPC_FIND_NODE_RESPONSE";
             case NODE_LOOKUP_REQUEST -> "NODE_LOOKUP_REQUEST";
             case NODE_LOOKUP_RESPONSE -> "NODE_LOOKUP_RESPONSE";
+            case VALUE_LOOKUP_REQUEST -> "VALUE_LOOKUP_REQUEST";
+            case VALUE_LOOKUP_RESPONSE -> "VALUE_LOOKUP_RESPONSE";
             case STORE_REQUEST -> "STORE_REQUEST";
             case STORE_RESPONSE -> "STORE_RESPONSE";
             case PING_REQUEST -> "PING_REQUEST";

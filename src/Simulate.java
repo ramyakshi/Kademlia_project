@@ -11,7 +11,7 @@ public class Simulate {
         //PrintStream out = new PrintStream(new FileOutputStream("output.txt"));
         //System.setOut(out);
         System.out.println("\n=== STARTING SIMULATION");
-        EDSimulator.start(5, 2, 4, 1, 1); // to test splitting buckets
+        EDSimulator.start(10, 2, 4, 1, 1); // to test splitting buckets
         System.out.println("\n=== PRINTING END STATE");
         EDSimulator.printEndState();
         //System.out.print(Util.digest(BigInteger.valueOf(1)));

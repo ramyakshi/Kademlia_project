@@ -140,8 +140,6 @@ public class Protocol {
         }
         // handle call response - function call
         if (result != null) {
-            //result.sender = nodeToAsk;
-            //handleResponse(result,nodeToProtocolMap);
             if(external==false)
                 EDSimulator.add(1,Event.RPC_FIND_NODE_RESPONSE,result.sender,result.target,result.payload);
             else
@@ -165,26 +163,6 @@ public class Protocol {
         Payload payload = new Payload(foundNodes);
         return new Event(1, Event.RPC_FIND_NODE_RESPONSE, this.node, sender, payload);
     }
-
-    /*public void rpcFindNodeRequest(Node sender, Node receiver) {
-        this.welcomeIfNew(sender);
-        List<Node> neighbors = this.routingTable.findNeighbors(receiver, sender);
-        EDSimulator.add(1, Event.RPC_FIND_NODE_RESPONSE, this.node, sender, new Payload(neighbors));
-    }*/
-
-    /**
-     * Performed when receiving a response to FIND_NODE (or feel free refactor to more general case)
-     */
-    /*public void rpcFindNodeResponse(List<Node> nodes) {
-        // TODO: change this to complete node lookup procedure, now it just adds the contacts received
-        for (Node node : nodes) {
-            this.welcomeIfNew(node);
-        }
-        // is this response from which node?
-        // how many requests i have outstanding?
-        // should i send another request to another node?
-    }*/
-
 
     /**
      * Called when this node joins the network.
@@ -220,7 +198,14 @@ public class Protocol {
         EDSimulator.add(1, Event.NODE_LOOKUP_RESPONSE, null,this.node,new Payload(lookedUpNodes));
     }
 
-    public void callRemoteStore(HashMap<BigInteger,Protocol> nodeToProtocolMap, BigInteger NodeToAsk,BigInteger key, String value)
+    public void rpcValueLookUpRequest(Node target, HashMap<BigInteger, Protocol> map)
+    {
+        NetworkCrawler crawler = new NetworkCrawler(this.k,this.alpha,this);
+        String response = crawler.valueLookUpBegin(target, map, nowTime);
+        EDSimulator.add(1, Event.VALUE_LOOKUP_RESPONSE, null,this.node,new Payload(null,response));
+    }
+
+    public void callRemoteStore(HashMap<BigInteger,Protocol> nodeToProtocolMap, BigInteger NodeToAsk,BigInteger key, String value,boolean external)
     {
         //System.out.println("Call store sender " + this.node.getId()+" receiver " + NodeToAsk);
         Node sender = this.node;
@@ -243,9 +228,18 @@ public class Protocol {
         {
             result.sender = new Node(NodeToAsk);
             //handleResponse(result,nodeToProtocolMap);
-            EDSimulator.add(1,Event.STORE_RESPONSE,result.sender,result.target,result.payload);
+            if(external==false)
+                EDSimulator.add(1,Event.STORE_RESPONSE,result.sender,result.target,result.payload);
+            else {
+                result.type = Event.DEFAULT;
+                this.handleResponse(result,nodeToProtocolMap);
+            }
         }
 
+    }
+    public void callRemoteStore(HashMap<BigInteger,Protocol> nodeToProtocolMap, BigInteger NodeToAsk,BigInteger key, String value)
+    {
+        this.callRemoteStore(nodeToProtocolMap,NodeToAsk,key,value,false);
     }
     public Event rpcStoreRequest(Node sender,BigInteger key,String value)
     {
@@ -253,9 +247,6 @@ public class Protocol {
         //System.out.println(this.node.getId()+" storing key "+ key+" and value "+ value);
         this.welcomeIfNew(sender);
         this.storage.setValue(key,value,0);
-        //System.out.println("Stored: " + this.storage.getContentValue(key));
-        //EDSimulator.add(5,Event.STORE_RESPONSE,this.node,sender,new Payload(key,value));
-        //System.out.println("Nowtime before store response - "+nowTime);
         return new Event(1,Event.STORE_RESPONSE,this.node,sender,new Payload(key,value,"OK"));
     }
 
@@ -356,11 +347,11 @@ public class Protocol {
             case Event.RPC_FIND_NODE_REQUEST:
                 this.callFindNode(map,event.target, event.payload.node.getId());
                 break;
-            case Event.RPC_FIND_NODE_RESPONSE, Event.STORE_RESPONSE, Event.PING_RESPONSE, Event.RPC_FIND_VAL_RESPONSE:
+            case Event.RPC_FIND_NODE_RESPONSE, Event.STORE_RESPONSE, Event.PING_RESPONSE, Event.RPC_FIND_VAL_RESPONSE,Event.VALUE_LOOKUP_RESPONSE:
                 this.handleResponse(event,map);
                 break;
             case Event.NODE_LOOKUP_REQUEST:
-                this.rpcNodeLookUpRequest(event.target,map);
+                this.rpcNodeLookUpRequest(event.payload.node,map);
                 break;
             case Event.STORE_REQUEST:
                 this.callRemoteStore(map,event.target.getId(),event.payload.keyToStore, event.payload.valueToStore);
@@ -370,6 +361,9 @@ public class Protocol {
                 break;
             case Event.RPC_FIND_VAL_REQUEST:
                 this.callFindValue(map,event.target,event.payload.keyToStore);
+                break;
+            case Event.VALUE_LOOKUP_REQUEST:
+                this.rpcValueLookUpRequest(event.payload.node,map);
                 break;
         }
     }

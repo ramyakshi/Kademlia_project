@@ -42,6 +42,7 @@ public class NetworkCrawler {
         this.lastCrawled = new ArrayList<>();
         this.protocol = protocol;
         this.debugMode = false;
+        this.node = protocol.node;
 
     }
     public static  boolean areListsEqual(List<Node> l1, List<Node> l2)
@@ -64,6 +65,129 @@ public class NetworkCrawler {
         return nodes;
     }
 
+    public String valueLookUpBegin(Node target, HashMap<BigInteger, Protocol> nodeProtocolMap, long nowTime)
+    {
+        if(this.nowTime == 0)
+            this.nowTime = nowTime;
+        if(this.nodeIdToProtocol == null)
+            this.nodeIdToProtocol = nodeProtocolMap;
+        System.out.println("this node "+this.node.getId());
+        List<Node> initialKNearest = this.protocol.getRoutingTable().findNeighbors(target,this.node);
+        printKnearestList(initialKNearest);
+
+        for(int i=0; i<initialKNearest.size();i++) {
+
+            contactStatusMap.put(initialKNearest.get(i),"NOTCONTACTED");
+        }
+        return valueLookupRecursive(initialKNearest, target);
+    }
+
+    public String valueLookupRecursive(List<Node> kNearestList, Node target)
+    {
+        printContactMap();
+        printKnearestList(kNearestList);
+
+        if (areListsEqual(kNearestList, lastCrawled)) {
+            count = kNearestList.size();
+        }
+        lastCrawled = kNearestList;
+
+        HashMap<Node, Payload> valueReturned = new HashMap<>();
+        int localCount = 0;
+        for (Node n : kNearestList) {
+            if (localCount < count) {
+                if (contactStatusMap.get(n).equals("NOTCONTACTED")) {
+                    localCount++;
+                    Payload returnValue = this.protocol.callFindValue(nodeIdToProtocol, n, target.getId(), true);
+                    contactStatusMap.put(n, "CONTACTED");
+                    valueReturned.put(n, returnValue);
+                }
+            }
+            if (localCount >= count)
+                break;
+        }
+
+        if (localCount == 0) {
+            return null;
+        }
+        // Remove nodes which failed to respond
+        return removeNodesValue(valueReturned, kNearestList, target);
+    }
+
+    public String removeNodesValue(HashMap<Node, Payload> nearestReturned, List<Node> nearestKNodes,Node target)
+    {
+
+        ArrayList<Node> toRemove = new ArrayList<>();
+        Map<String,Integer> foundValues = new HashMap<>();
+        List<Node> nodesWithoutValue = new ArrayList<>();
+
+        for(Map.Entry<Node, Payload> entry : nearestReturned.entrySet())
+        {
+            Payload curr = entry.getValue();
+            // If payload is null, remove the node
+            if(curr==null)
+            {
+                toRemove.add(entry.getKey());
+            }
+            else if(curr.valueToStore!=null){
+                if(!foundValues.containsKey(curr.valueToStore))
+                {
+                    foundValues.put(curr.valueToStore,1);
+                }
+                else {
+                    foundValues.put(curr.valueToStore, foundValues.get(curr.valueToStore) + 1);
+                }
+            }
+            else {
+                nearestKNodes.addAll(curr.nodes);
+                nodesWithoutValue.add(entry.getKey());
+            }
+        }
+        PriorityQueue<Node> nearestKNodesWithoutValue = getKNearest(nodesWithoutValue,target);
+        nearestKNodes.removeAll(toRemove);
+        // To prevent nodes being duplicated in k-nearest list
+        ArrayList<Node> uniqueNodes = new ArrayList<>(new HashSet<>(nearestKNodes));
+        /*if(debugMode)
+        {
+            System.out.println("Unique nodes");
+            for(Node n : uniqueNodes)
+            {
+                System.out.print(n.getId()+" ");
+            }
+            System.out.println("----------");
+        }*/
+        PriorityQueue<Node> updatedKNearest = getKNearest(uniqueNodes, target);
+        for(Node n : updatedKNearest)
+        {
+            if(!contactStatusMap.containsKey(n))
+                contactStatusMap.put(n,"NOTCONTACTED");
+        }
+        if(foundValues.size()>0)
+        {
+            int maxFreq = 0;
+            String valueToReturn = null;
+            if(foundValues.size()>1)
+            {
+                System.out.print("Got multiple values for key: "+target.getId());
+            }
+            for(Map.Entry<String,Integer> entry : foundValues.entrySet())
+            {
+                if(entry.getValue()>maxFreq)
+                {
+                    maxFreq = entry.getValue();
+                    valueToReturn = entry.getKey();
+                }
+            }
+            Node n = nearestKNodesWithoutValue.peek();
+            if(n!=null){
+                //System.out.println("Sending store request to node " + n.getId());
+                this.protocol.callRemoteStore(nodeIdToProtocol,n.getId(),target.getId(),valueToReturn, true);
+            }
+            return valueToReturn;
+        }
+
+        return valueLookupRecursive(new ArrayList<>(updatedKNearest),target);
+    }
     public List<Node> nodeLookupBegin(Node target, HashMap<BigInteger, Protocol> nodeProtocolMap, long nowTime)
     {
        /* nearestKNodes = getKNearest(globalList, target);
