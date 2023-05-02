@@ -78,7 +78,7 @@ public class EDSimulator {
 
         //Reproduce error
         EDSimulator.printRoutingTable(protocols.get(6).node);
-        List<Node> nodes = protocols.get(6).getRoutingTable().findNeighbors(new Node(BigInteger.valueOf(9)),protocols.get(6).node);
+        List<Node> nodes = protocols.get(6).getRoutingTable().findNeighbors(new Node(BigInteger.valueOf(9)),null);
         System.out.println("Findneighbors returned");
         for(Node n : nodes)
         {

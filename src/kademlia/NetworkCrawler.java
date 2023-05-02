@@ -181,7 +181,7 @@ public class NetworkCrawler {
             Node n = nearestKNodesWithoutValue.peek();
             if(n!=null){
                 //System.out.println("Sending store request to node " + n.getId());
-                this.protocol.callRemoteStore(nodeIdToProtocol,n.getId(),target.getId(),valueToReturn, true);
+                boolean result = this.protocol.callRemoteStore(nodeIdToProtocol,n.getId(),target.getId(),valueToReturn, true);
             }
             return valueToReturn;
         }
@@ -287,7 +287,6 @@ public class NetworkCrawler {
            }
            if(localCount>=count)
                break;
-
        }
        // No candidate node which is still to be contacted exists
        if(localCount == 0)

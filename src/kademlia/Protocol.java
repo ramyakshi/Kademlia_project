@@ -11,6 +11,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static kademlia.Util.digest;
+
 public class Protocol {
     public Node node; // (Dumb) Node representation of this Protocol, without state
     public RoutingTable routingTable;
@@ -49,7 +51,7 @@ public class Protocol {
             BigInteger key = stored.getKey();
             Content value = stored.getValue();
             // Get digest of key
-            Node keynode = new Node(Util.digest(key));
+            Node keynode = new Node(digest(key));
             List<Node> neighbours = this.routingTable.findNeighbors(node,this.node);
             /*System.out.println("Neighbours - ");
             for(Node n : neighbours)
@@ -205,7 +207,7 @@ public class Protocol {
         EDSimulator.add(1, Event.VALUE_LOOKUP_RESPONSE, null,this.node,new Payload(null,response));
     }
 
-    public void callRemoteStore(HashMap<BigInteger,Protocol> nodeToProtocolMap, BigInteger NodeToAsk,BigInteger key, String value,boolean external)
+    public boolean callRemoteStore(HashMap<BigInteger,Protocol> nodeToProtocolMap, BigInteger NodeToAsk,BigInteger key, String value,boolean external)
     {
         //System.out.println("Call store sender " + this.node.getId()+" receiver " + NodeToAsk);
         Node sender = this.node;
@@ -216,7 +218,7 @@ public class Protocol {
             RoutingTable table = this.getRoutingTable();
             table.removeContact(new Node(NodeToAsk));
             System.out.println("Target node with Id- " + NodeToAsk +" does not exist");
-            return;
+            return false;
         }
         Event result = null;
         if(protocol!=null)
@@ -235,11 +237,11 @@ public class Protocol {
                 this.handleResponse(result,nodeToProtocolMap);
             }
         }
-
+        return true;
     }
-    public void callRemoteStore(HashMap<BigInteger,Protocol> nodeToProtocolMap, BigInteger NodeToAsk,BigInteger key, String value)
+    public boolean callRemoteStore(HashMap<BigInteger,Protocol> nodeToProtocolMap, BigInteger NodeToAsk,BigInteger key, String value)
     {
-        this.callRemoteStore(nodeToProtocolMap,NodeToAsk,key,value,false);
+        return this.callRemoteStore(nodeToProtocolMap,NodeToAsk,key,value,false);
     }
     public Event rpcStoreRequest(Node sender,BigInteger key,String value)
     {
@@ -334,6 +336,57 @@ public class Protocol {
         }
         System.out.println("--------");
     }
+
+    public String get(BigInteger key, HashMap<BigInteger,Protocol> nodeToProtocolMap) {
+        BigInteger dkey = Util.digest(key);
+        System.out.println("Looking up key " + key);
+
+        // If this node has it, return it
+        if (this.storage.getContentValue(dkey) != null) {
+            return this.storage.getContentValue(dkey);
+        }
+        NetworkCrawler spider = new NetworkCrawler(this.k , this.alpha, this);
+        return spider.valueLookUpBegin(new Node(dkey),nodeToProtocolMap,nowTime);
+    }
+
+    public boolean set(BigInteger key, String value,HashMap<BigInteger,Protocol> nodeToProtocolMap) throws Exception {
+        System.out.println("Setting '" + key + "' = '" + value + "' on network");
+        BigInteger dkey = digest(key);
+        return setDigest(dkey, value,nodeToProtocolMap);
+    }
+
+    public boolean setDigest(BigInteger dkey, String value,HashMap<BigInteger,Protocol> nodeToProtocolMap) throws Exception {
+        Node keyNode = new Node(dkey);
+
+        NetworkCrawler spider = new NetworkCrawler(this.k, this.alpha, this);
+        List<Node> nodes = spider.nodeLookupBegin(keyNode, nodeToProtocolMap,nowTime);
+        System.out.println("Setting '" + dkey.toString(16) + "' on " + nodes);
+
+        // If this node is close too, then store here as well
+        BigInteger biggest = BigInteger.ZERO;
+        for (Node n : nodes) {
+            BigInteger distance = n.distanceTo(keyNode);
+            if (distance.compareTo(biggest) > 0) {
+                biggest = distance;
+            }
+        }
+
+        if (this.node.distanceTo(keyNode).compareTo(biggest) < 0) {
+            this.storage.setValue(dkey, value, 0);
+        }
+
+        // Call store on all found nodes
+        boolean atLeastOne = false;
+        for (Node n : nodes) {
+            boolean call = this.callRemoteStore(nodeToProtocolMap,n.getId(), dkey, value,true);
+            atLeastOne = atLeastOne || call;
+        }
+
+        // Return true only if at least one store call succeeded
+        return atLeastOne;
+    }
+
+
     /**
      * Called by simulator
      */
