@@ -1,5 +1,6 @@
 package simulator;
 
+import java.io.*;
 import java.math.BigInteger;
 import java.util.*;
 import kademlia.*;
@@ -7,7 +8,16 @@ import kademlia.*;
 public class EDSimulator {
     private static final PriorityQueue<Event> queue = new PriorityQueue<Event>();
     private static final List<Protocol> protocols = new ArrayList<>(); // we pick from this list to create random events
-    private static final HashMap<BigInteger, Protocol> nodeIdToProtocol = new HashMap<BigInteger, Protocol>();
+    public static final HashMap<BigInteger, Protocol> nodeIdToProtocol = new HashMap<BigInteger, Protocol>();
+
+    private static int seed;
+    public static int maxLatency = 0;
+
+    public static Random globalRandom;
+
+    public static final List<GetRecordBookKeeper> getRecords = new ArrayList<>();
+
+    public static final List<SetRecordBookKeeper> setRecords = new ArrayList<>();
 
     private EDSimulator() {} // prevent construction
 
@@ -15,21 +25,32 @@ public class EDSimulator {
      * Runs an experiment
      * @param nNodes - number of nodes
      * @param nBootstraps - number of bootstrap operations (< nNodes)
+     *
+     *
      */
-    public static void start(int nNodes, int nBootstraps, int bitSpace, int k, int alpha) {
 
+    public static void finish()
+    {
+        protocols.clear();
+        nodeIdToProtocol.clear();
+        getRecords.clear();
+        setRecords.clear();
+        queue.clear();
+    }
+    public static void start(int nNodes, int nBootstraps, int bitSpace, int k, int alpha,int maxLatency, int nGetReq, int nSetReq,int seed, float churnFrac) throws Exception{
 
+        globalRandom = new Random(seed);
+        int initialSeed = seed;
+        EDSimulator.maxLatency = maxLatency;
 
         // 1. Create nodes
         int createdNodes = 0;
         HashSet<BigInteger> nodeIds = new HashSet<>();
         // Increment seed and pass it as value to random constructor while constructing Config
-        long seed = 30;
-
 
         while (createdNodes < nNodes) {
             // if our bit-space is small, it may clash, just loop until created as needed
-            Protocol protocol = new Protocol(new Config(bitSpace, k, new Random(seed++),k,alpha));
+            Protocol protocol = new Protocol(new Config(bitSpace, k, new Random(seed++),alpha,alpha));
             Protocol prevProtocol = nodeIdToProtocol.putIfAbsent(protocol.node.id, protocol);
             if (prevProtocol == null) {
                 protocols.add(protocol);
@@ -64,19 +85,82 @@ public class EDSimulator {
         }
 
         //EDSimulator.add(1,Event.PING_REQUEST,protocols.get(2).node,protocols.get(4).node,new Payload("PING"));
-        //EDSimulator.add(queue.size(), Event.STORE_REQUEST,protocols.get(0).node,protocols.get(3).node,new Payload(BigInteger.valueOf(7),"7"));
-        //EDSimulator.add(queue.size(), Event.VALUE_LOOKUP_REQUEST,protocols.get(6).node,null,new Payload(new Node(BigInteger.valueOf(9))));
+        EDSimulator.add(queue.size(), Event.STORE_REQUEST,protocols.get(2).node,protocols.get(8).node,new Payload(BigInteger.valueOf(4),"3"));
+        //EDSimulator.add(queue.size()+1, Event.VALUE_LOOKUP_REQUEST,protocols.get(9).node,null,new Payload(new Node(BigInteger.valueOf(4))));
         //testRemoteStore(protocols.get(2).node,0);
         //EDSimulator.add(queue.size(), Event.RPC_FIND_VAL_REQUEST,protocols.get(2).node,protocols.get(3).node,new Payload(BigInteger.valueOf(5),null));
         //EDSimulator.add(1, Event.NODE_LOOKUP_REQUEST, protocols.get(1).node,protocols.get(randomNode).node,new Payload(protocols.get(randomNode).node));
 
+        //EDSimulator.add(queue.size(),Event.SET_REQUEST,protocols.get(13).node,null,new Payload(BigInteger.valueOf(33),"51"));
+        //EDSimulator.add(queue.size(),Event.GET_REQUEST,protocols.get(18).node,null,new Payload(BigInteger.valueOf(33),"51"));
+
+        List<BigInteger> keySet = new ArrayList<>();
+        for(int i=0;i<nSetReq;i++)
+        {
+            int randomIndex = globalRandom.nextInt(nNodes);
+            BigInteger randomKey = BigInteger.valueOf(globalRandom.nextInt());
+            keySet.add(randomKey);
+            EDSimulator.add(queue.size(),Event.SET_REQUEST,protocols.get(randomIndex).node,null,new Payload(randomKey,randomKey.toString()));
+        }
+
+        List<Integer> indicesToKill = new ArrayList<>();
+        List<Node> nodesToKill = new ArrayList<>();
+        List<BigInteger> nodeIdsToKill = new ArrayList<>();
+        if(churnFrac>0)
+        {
+            indicesToKill = getRandomNumbers((int)Math.ceil(churnFrac*nNodes),nNodes,seed++);
+
+            for(int i : indicesToKill)
+            {
+                nodesToKill.add(protocols.get(i).node);
+                nodeIdsToKill.add(protocols.get(i).node.getId());
+            }
+
+            EDSimulator.add(queue.size(),Event.KILL_NODE,null,null,new Payload(nodesToKill));
+
+        }
+        System.out.println("Number of Protocols before refresh "+protocols.size());
+        // Adding refresh to check if better results, comment out to simulate without refresh, with churn
+        if(churnFrac>0) {
+            for (int i = 0; i < protocols.size(); i++) {
+                if(!nodesToKill.contains(protocols.get(i).node))
+                    EDSimulator.add(queue.size(), Event.REFRESH_OPERATION, protocols.get(i).node, null, null);
+            }
+        }
+        System.out.println("Number of Protocols before get "+protocols.size());
+        int correct = 0;
+        for(int i=0;i<nGetReq;i++)
+        {
+            System.out.println("Adding GET_REQ to queue");
+            //System.out.println(nodeIdToProtocol.size());
+            int randomIndex = globalRandom.nextInt(protocols.size());
+            while(nodesToKill.contains(protocols.get(randomIndex).node))
+            {
+                System.out.println("Generating another random");
+                randomIndex = globalRandom.nextInt(protocols.size());
+            }
+            int randomKeyIndex = globalRandom.nextInt(keySet.size());
+            EDSimulator.add(queue.size(), Event.GET_REQUEST,protocols.get(randomIndex).node,null,new Payload(keySet.get(randomKeyIndex),null));
+            System.out.println("Get request "+i+" added");
+        }
         // perform the actual simulation
         boolean exit = false;
         while (!exit && queue.size()>0) {
             exit = executeNext();
         }
+        System.out.println("BitSpace|Seed|K|Alpha|Max Latency|NumNodes|NumBootstrap|NumGET|NumSET|Churn rate|NumSuccess|Total LookupTime|Total NumRounds");
+        try(FileWriter fw = new FileWriter("GETOutput.txt", true);
+            BufferedWriter bw = new BufferedWriter(fw))
+        {
+            String line = bitSpace+"|"+initialSeed+"|"+k+"|"+alpha+"|"+maxLatency+"|"+nNodes+"|"+nBootstraps+"|"+nGetReq+"|"+nSetReq+"|"+churnFrac+"|";
+            bw.write(line);
+        }
+        printSet();
+        printGet();
 
-        //Reproduce error
+        //Clearing variables before next run
+        finish();
+        /*Reproduce error
         System.out.println("ERROR LINE START");
         EDSimulator.printRoutingTable(protocols.get(6).node);
         List<Node> nodes = protocols.get(6).getRoutingTable().findNeighbors(new Node(BigInteger.valueOf(9)),null);
@@ -85,7 +169,7 @@ public class EDSimulator {
         {
             System.out.print(n.getId()+" ");
         }
-        System.out.println();
+        System.out.println(); */
     }
     public static List<Integer> getRandomNumbers(int k, int n, long seed) {
         if (k >= n) {
@@ -102,7 +186,7 @@ public class EDSimulator {
 
     }
 
-    public static boolean killNode(List<Node> nodes)
+    public static boolean killNodes(List<Node> nodes)
     {
         for(Node n : nodes){
             BigInteger id = n.getId();
@@ -118,6 +202,7 @@ public class EDSimulator {
             }
             System.out.println("Node "+id+" left network");
         }
+        assert protocols.size()==nodeIdToProtocol.size();
         return true;
     }
     public static void testRemoteStore(Node bootstrapNode,int randomNode)
@@ -190,7 +275,12 @@ public class EDSimulator {
             return true;
         }
         CommonState.setTime(event.timestamp);
-        if(event.type == Event.STORE_REQUEST)
+        if(event.type==Event.KILL_NODE)
+        {
+            killNodes(event.payload.nodes);
+            return false;
+        }
+        /*if(event.type == Event.STORE_REQUEST)
         {
             System.out.println("event: " + event+" | target: " + event.target + " | sender: " + event.sender +" | payload: <" +
                     event.payload.keyToStore.toString()+","+event.payload.valueToStore+">");
@@ -207,7 +297,7 @@ public class EDSimulator {
         {
             EDSimulator.killNode(event.payload.nodes);
             return false;
-        }
+        }*/
         // REASON: Because lookup responses don't have a sender
         if(event.type== Event.NODE_LOOKUP_RESPONSE || event.type == Event.VALUE_LOOKUP_RESPONSE)
         {
@@ -216,11 +306,12 @@ public class EDSimulator {
         Protocol eventSender = EDSimulator.nodeIdToProtocol.getOrDefault(event.sender.id,null);
         if(eventSender==null)
         {
-            System.out.println("Sender " + event.sender +" does not exist in network");
+            System.out.println("Sender " + event.sender +" does not exist in network for "+event.type);
             return false;
         }
         // REASON : Because bootstrap events have no target
-        if((event.type!= Event.BOOTSTRAP && event.type!=Event.VALUE_LOOKUP_REQUEST && event.type!= Event.NODE_LOOKUP_REQUEST)
+        if((event.type!= Event.BOOTSTRAP && event.type!=Event.VALUE_LOOKUP_REQUEST && event.type!= Event.NODE_LOOKUP_REQUEST
+           && event.type!=Event.SET_REQUEST && event.type != Event.GET_REQUEST && event.type!=Event.REFRESH_OPERATION)
                 &&  nodeIdToProtocol.getOrDefault(event.target.id,null) == null)
         {
             System.out.println("Target node is not on network - " +event.target.id);
@@ -237,9 +328,87 @@ public class EDSimulator {
      *   The number of time units before the event is scheduled (non-negative).
      */
     public static void add(long delay, int type, Node sender, Node target, Payload payload) {
+        long id = Math.abs(EDSimulator.globalRandom.nextLong());
         long currTime = CommonState.getTime();
-        Event event = new Event(currTime + delay, type, sender, target, payload);
+        Event event = new Event(id,currTime + delay, type, sender, target, payload);
         queue.add(event);
     }
 
+    public static void printGet() throws Exception
+    {
+        System.out.println("GET Requests");
+        //System.out.println("BitSpace|Seed|K|Alpha|Max Latency|NumNodes|NumBootstrap|NumGET|NumSET|NumSuccess|Total LookupTime|Total NumRounds");
+
+        long totLookup = 0, totNumRounds = 0;
+        int numSuccess = 0;
+        for(int i=0;i<getRecords.size();i++)
+        {
+            GetRecordBookKeeper event = getRecords.get(i);
+            totLookup+= event.lookUpTime;
+            totNumRounds+= event.numRounds;
+            if(event.valueReturned!=null)
+                numSuccess++;
+            System.out.println("GET_ID: "+ event.eventId+" | Sender: " +event.initiator+" | Number of rounds: " + event.numRounds+" | Latency: "+event.lookUpTime+"" +
+                    " Key searched: "+ event.lookedUpKey +" | Value returned: "+event.valueReturned);
+        }
+        try(FileWriter fw = new FileWriter("GETOutput.txt", true);
+            BufferedWriter bw = new BufferedWriter(fw))
+        {
+            bw.write(numSuccess+"|"+totLookup+"|"+totNumRounds+"|");
+        }
+        printStats();
+        System.out.println("----------------------");
+        return;
+
+    }
+
+    public static void printStats() throws Exception
+    {
+        List<Double> sizes = new ArrayList<>();
+        for(Protocol protocol : protocols)
+        {
+            sizes.add((double) protocol.storage.getNodeStorageTable().size());
+        }
+        Double avgLoad = calculateMean(sizes);
+        Double standardDev = calculateStandardDeviation(sizes,avgLoad);
+        try(FileWriter fw = new FileWriter("GETOutput.txt", true);
+            BufferedWriter bw = new BufferedWriter(fw))
+        {
+            String line = avgLoad+"|"+standardDev;
+            bw.write(line);
+            bw.newLine();
+        }
+    }
+    public static Double calculateMean(List<Double> numbers) {
+        double sum = 0;
+        for (double num : numbers) {
+            sum += num;
+        }
+        return sum / numbers.size();
+    }
+    public static Double calculateStandardDeviation(List<Double> numbers, double mean) {
+        double varianceSum = 0;
+        for (double num : numbers) {
+            varianceSum += Math.pow(num - mean, 2);
+        }
+        double variance = varianceSum / numbers.size();
+        return Math.sqrt(variance);
+    }
+
+    public static void printSet()
+    {
+        System.out.println("SET Requests");
+        for(SetRecordBookKeeper event : setRecords)
+        {
+            System.out.print("ID: "+ event.eventId+" | Sender: " +event.initiator+" | Number of rounds: " + event.numRounds+" | Latency: "+event.lookUpTime+"" +
+                    " | Key,Value stored: <"+event.keyToStore+","+event.valueToStore+">" + "| Result: "+event.success+" | Nodes on which stored: [");
+            for(Node node : event.nodesOnWhichStored)
+            {
+                System.out.print(node.getId()+",");
+            }
+            System.out.print("]\n");
+        }
+        System.out.println("----------------------");
+        return;
+    }
 }

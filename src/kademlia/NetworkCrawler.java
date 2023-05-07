@@ -31,6 +31,10 @@ public class NetworkCrawler {
     public static boolean debugMode;
 
     public static long nowTime = 0;
+
+    public static int numRounds;
+
+    public static int lookUpTime;
     public NetworkCrawler(int k, int alpha, Protocol protocol)
     {
         //this.node = node;
@@ -43,7 +47,8 @@ public class NetworkCrawler {
         this.protocol = protocol;
         this.debugMode = false;
         this.node = protocol.node;
-
+        this.numRounds = 0;
+        this.lookUpTime = 0;
     }
     public static  boolean areListsEqual(List<Node> l1, List<Node> l2)
     {
@@ -94,11 +99,14 @@ public class NetworkCrawler {
 
         HashMap<Node, Payload> valueReturned = new HashMap<>();
         int localCount = 0;
+        int thisRoundLatency = 0;
+
         for (Node n : kNearestList) {
             if (localCount < count) {
                 if (contactStatusMap.get(n).equals("NOTCONTACTED")) {
                     localCount++;
                     Payload returnValue = this.protocol.callFindValue(nodeIdToProtocol, n, target.getId(), true);
+                    thisRoundLatency = Math.max(thisRoundLatency,EDSimulator.globalRandom.nextInt(EDSimulator.maxLatency)+1);
                     contactStatusMap.put(n, "CONTACTED");
                     valueReturned.put(n, returnValue);
                 }
@@ -109,6 +117,10 @@ public class NetworkCrawler {
 
         if (localCount == 0) {
             return null;
+        }
+        else{
+            numRounds++;
+            lookUpTime+=thisRoundLatency;
         }
         // Remove nodes which failed to respond
         return removeNodesValue(valueReturned, kNearestList, target);
@@ -269,7 +281,7 @@ public class NetworkCrawler {
        lastCrawled = kNearestList;
 
        HashMap<Node, List<Node>> nearestReturned = new HashMap<>();
-       int localCount = 0;
+       int localCount = 0, thisRoundLatency = 0;
        for(Node n : kNearestList)
        {
            if(localCount< count) {
@@ -280,6 +292,7 @@ public class NetworkCrawler {
                    //Send lookup message
                    //List<Node> newNodes = this.nodeIdToProtocol.get(n.getId()).routingTable.findNeighbors(target,null);
                    List<Node> newNodes = this.protocol.callFindNode(nodeIdToProtocol,n,target.getId(),true);
+                   thisRoundLatency = Math.max(thisRoundLatency,EDSimulator.globalRandom.nextInt(EDSimulator.maxLatency)+1);
                    //EDSimulator.add(nowTime+1, Event.RPC_FIND_NODE_REQUEST,this.node,n,new Payload(this.node));
                    contactStatusMap.put(n,"CONTACTED");
                    nearestReturned.put(n,newNodes);
@@ -298,6 +311,10 @@ public class NetworkCrawler {
            }*/
            //System.out.println();
            return kNearestList;
+       }
+       else {
+           numRounds++;
+           lookUpTime+=thisRoundLatency;
        }
        // Remove nodes which failed to respond
        return removeNodes(nearestReturned, kNearestList, target);

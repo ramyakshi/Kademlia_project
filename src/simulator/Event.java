@@ -3,6 +3,8 @@ package simulator;
 import kademlia.*;
 
 public class Event implements Comparable<Event> {
+
+    public long eventId;
     public long timestamp;
     public int type;
     public static final int BOOTSTRAP = 1;
@@ -33,11 +35,22 @@ public class Event implements Comparable<Event> {
 
     public static final int VALUE_LOOKUP_RESPONSE = 15;
 
+    public static final int SET_REQUEST = 16;
+
+    public static final int SET_RESPONSE = 17;
+
+    public static final int GET_REQUEST = 18;
+
+    public static final int GET_RESPONSE = 19;
+
+    public static final int REFRESH_OPERATION = 20;
+
     public Node sender;
     public Node target;
     public Payload payload;
 
-    public Event(long timestamp, int type, Node sender, Node target, Payload payload) {
+    public Event(long id,long timestamp, int type, Node sender, Node target, Payload payload) {
+        this.eventId = id;
         this.timestamp = timestamp;
         this.type = type;
         this.sender = sender;
@@ -67,6 +80,11 @@ public class Event implements Comparable<Event> {
             case KILL_NODE -> "KILL_NODE";
             case RPC_FIND_VAL_REQUEST -> "RPC_FIND_VAL_REQUEST";
             case RPC_FIND_VAL_RESPONSE -> "RPC_FIND_VAL_RESPONSE";
+            case SET_REQUEST -> "SET_REQUEST";
+            case SET_RESPONSE -> "SET_RESPONSE";
+            case GET_REQUEST -> "GET_REQUEST";
+            case GET_RESPONSE -> "GET_RESPONSE";
+            case REFRESH_OPERATION -> "REFRESH_OPERATION";
             default -> "UNKNOWN";
         };
         return String.format("%d %s", this.timestamp, type);
