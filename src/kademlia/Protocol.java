@@ -198,8 +198,8 @@ public class Protocol {
 
     /**
      * Called when this node joins the network.
-     * @param bootstrapNode
-     *  The known node to ask for a list of neighbors closest to self
+     * @param nodes
+     *  The known nodes to ask for a list of neighbors closest to self
      */
     public void bootstrap(List<Node> nodes, HashMap<BigInteger,Protocol> nodeToProtocolMap) {
         List<Node> bootstrappedNodes = new ArrayList<>();
@@ -285,8 +285,8 @@ public class Protocol {
     }
 
     public boolean callPing(HashMap<BigInteger, Protocol> nodeToProtocolMap, BigInteger nodeIdToAsk, boolean external) {
-        Protocol protocol = nodeToProtocolMap.getOrDefault(nodeIdToAsk, null);
-        if(protocol==null)
+        Protocol nodeToAsk = nodeToProtocolMap.getOrDefault(nodeIdToAsk, null);
+        if(nodeToAsk==null)
         {
             RoutingTable table = this.getRoutingTable();
             table.removeContact(new Node(nodeIdToAsk));
@@ -294,8 +294,8 @@ public class Protocol {
             return false;
         }
         Event result = null;
-        if (protocol != null) {
-            result = protocol.rpcPingRequest(this.node,nodeToProtocolMap);
+        if (nodeToAsk != null) {
+            result = nodeToAsk.rpcPingRequest(this.node,nodeToProtocolMap);
         }
         // handle call response - function call
         if (result != null ) {
@@ -398,11 +398,11 @@ public class Protocol {
 
     public boolean set(long eventId,BigInteger key, String value,HashMap<BigInteger,Protocol> nodeToProtocolMap){
         System.out.println("Setting '" + key + "' = '" + value + "' on network, initiated by " + this.node.getId());
-        return setDigest(eventId, key, value,nodeToProtocolMap);
+        return setDigest(eventId, key, value, nodeToProtocolMap);
 
     }
 
-    public boolean setDigest(long eventId,BigInteger key,String value,HashMap<BigInteger,Protocol> nodeToProtocolMap)  {
+    public boolean setDigest(long eventId, BigInteger key, String value,HashMap<BigInteger,Protocol> nodeToProtocolMap)  {
         BigInteger dkey = digest(key);
         Node keyNode = new Node(dkey);
 
@@ -445,9 +445,8 @@ public class Protocol {
     public void processEvent(Event event,HashMap<BigInteger, Protocol> map) {
         nowTime = Math.max(nowTime,event.timestamp);
         switch (event.type) {
-
             case Event.BOOTSTRAP:
-                this.bootstrap(event.payload.nodes,map);
+                this.bootstrap(event.payload.nodes, map);
                 break;
             case Event.RPC_FIND_NODE_REQUEST:
                 this.callFindNode(map,event.target, event.payload.node.getId());
@@ -476,7 +475,7 @@ public class Protocol {
                     System.out.println("Value lookup returned " + result);
                 break;
             case Event.SET_REQUEST:
-                this.set(event.eventId,event.payload.keyToStore, event.payload.valueToStore,map);
+                this.set(event.eventId, event.payload.keyToStore, event.payload.valueToStore, map);
                 break;
             case Event.REFRESH_OPERATION:
                 this.refresh(map);

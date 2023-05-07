@@ -21,14 +21,6 @@ public class EDSimulator {
 
     private EDSimulator() {} // prevent construction
 
-    /**
-     * Runs an experiment
-     * @param nNodes - number of nodes
-     * @param nBootstraps - number of bootstrap operations (< nNodes)
-     *
-     *
-     */
-
     public static void finish()
     {
         protocols.clear();
@@ -45,9 +37,7 @@ public class EDSimulator {
 
         // 1. Create nodes
         int createdNodes = 0;
-        HashSet<BigInteger> nodeIds = new HashSet<>();
         // Increment seed and pass it as value to random constructor while constructing Config
-
         while (createdNodes < nNodes) {
             // if our bit-space is small, it may clash, just loop until created as needed
             Protocol protocol = new Protocol(new Config(bitSpace, k, new Random(seed++),alpha,alpha));
@@ -55,37 +45,23 @@ public class EDSimulator {
             if (prevProtocol == null) {
                 protocols.add(protocol);
                 createdNodes += 1;
-                nodeIds.add(protocol.node.getId());
             }
         }
 
-        // 2.1 Bootstrap requests from each node to 'nBootstrap' random nodes
-
-        for(int i=1;i<nNodes;i++)
+        // 2. Queue a bootstrap event for each node, using 'nBootstrap' other random nodes to perform the bootstrap
+        for(int i=1; i<nNodes; i++)
         {
-            List<Integer> result = EDSimulator.getRandomNumbers(nBootstraps,i, seed++);
-            /*System.out.println("Indexes");
-            for(int n : result)
+            List<Integer> randomIndexes = EDSimulator.getRandomNumbers(nBootstraps, i, seed++);
+            List<Node> bootstrapNodes = new ArrayList<>();
+            for(int index : randomIndexes)
             {
-                System.out.print(n+" ");
+                bootstrapNodes.add(protocols.get(index).node);
             }
-            System.out.println();*/
-            List<Node> nodes = new ArrayList<>();
-            for(int index : result)
-            {
-                nodes.add(protocols.get(index).node);
-            }
-            /*System.out.println("Nodes to bootstrap");
-            for(Node n : nodes)
-            {
-                System.out.print(n.getId()+" ");
-            }
-            System.out.println();*/
-            EDSimulator.add(queue.size(), Event.BOOTSTRAP,protocols.get(i).node,null,new Payload(nodes));
+            EDSimulator.add(queue.size(), Event.BOOTSTRAP, protocols.get(i).node,null, new Payload(bootstrapNodes));
         }
 
         //EDSimulator.add(1,Event.PING_REQUEST,protocols.get(2).node,protocols.get(4).node,new Payload("PING"));
-        EDSimulator.add(queue.size(), Event.STORE_REQUEST,protocols.get(2).node,protocols.get(8).node,new Payload(BigInteger.valueOf(4),"3"));
+        //EDSimulator.add(queue.size(), Event.STORE_REQUEST,protocols.get(2).node,protocols.get(8).node,new Payload(BigInteger.valueOf(4),"3"));
         //EDSimulator.add(queue.size()+1, Event.VALUE_LOOKUP_REQUEST,protocols.get(9).node,null,new Payload(new Node(BigInteger.valueOf(4))));
         //testRemoteStore(protocols.get(2).node,0);
         //EDSimulator.add(queue.size(), Event.RPC_FIND_VAL_REQUEST,protocols.get(2).node,protocols.get(3).node,new Payload(BigInteger.valueOf(5),null));
@@ -94,6 +70,7 @@ public class EDSimulator {
         //EDSimulator.add(queue.size(),Event.SET_REQUEST,protocols.get(13).node,null,new Payload(BigInteger.valueOf(33),"51"));
         //EDSimulator.add(queue.size(),Event.GET_REQUEST,protocols.get(18).node,null,new Payload(BigInteger.valueOf(33),"51"));
 
+        // 3. Queue SET requests
         List<BigInteger> keySet = new ArrayList<>();
         for(int i=0;i<nSetReq;i++)
         {
@@ -103,13 +80,12 @@ public class EDSimulator {
             EDSimulator.add(queue.size(),Event.SET_REQUEST,protocols.get(randomIndex).node,null,new Payload(randomKey,randomKey.toString()));
         }
 
-        List<Integer> indicesToKill = new ArrayList<>();
+        // 4. Queue Churn
         List<Node> nodesToKill = new ArrayList<>();
         List<BigInteger> nodeIdsToKill = new ArrayList<>();
         if(churnFrac>0)
         {
-            indicesToKill = getRandomNumbers((int)Math.ceil(churnFrac*nNodes),nNodes,seed++);
-
+            List<Integer> indicesToKill = getRandomNumbers((int)Math.ceil(churnFrac*nNodes),nNodes,seed++);
             for(int i : indicesToKill)
             {
                 nodesToKill.add(protocols.get(i).node);
@@ -120,6 +96,8 @@ public class EDSimulator {
 
         }
         System.out.println("Number of Protocols before refresh "+protocols.size());
+
+        // 5. Queue Refresh
         // Adding refresh to check if better results, comment out to simulate without refresh, with churn
         if(churnFrac>0) {
             for (int i = 0; i < protocols.size(); i++) {
@@ -128,6 +106,8 @@ public class EDSimulator {
             }
         }
         System.out.println("Number of Protocols before get "+protocols.size());
+
+        // 6. Queue GET
         int correct = 0;
         for(int i=0;i<nGetReq;i++)
         {
@@ -143,7 +123,8 @@ public class EDSimulator {
             EDSimulator.add(queue.size(), Event.GET_REQUEST,protocols.get(randomIndex).node,null,new Payload(keySet.get(randomKeyIndex),null));
             System.out.println("Get request "+i+" added");
         }
-        // perform the actual simulation
+
+        // Perform the actual simulation
         boolean exit = false;
         while (!exit && queue.size()>0) {
             exit = executeNext();
@@ -155,21 +136,11 @@ public class EDSimulator {
             String line = bitSpace+"|"+initialSeed+"|"+k+"|"+alpha+"|"+maxLatency+"|"+nNodes+"|"+nBootstraps+"|"+nGetReq+"|"+nSetReq+"|"+churnFrac+"|";
             bw.write(line);
         }
+
+        // Print stats + clear state
         printSet();
         printGet();
-
-        //Clearing variables before next run
         finish();
-        /*Reproduce error
-        System.out.println("ERROR LINE START");
-        EDSimulator.printRoutingTable(protocols.get(6).node);
-        List<Node> nodes = protocols.get(6).getRoutingTable().findNeighbors(new Node(BigInteger.valueOf(9)),null);
-        System.out.println("Findneighbors returned");
-        for(Node n : nodes)
-        {
-            System.out.print(n.getId()+" ");
-        }
-        System.out.println(); */
     }
     public static List<Integer> getRandomNumbers(int k, int n, long seed) {
         if (k >= n) {
@@ -183,7 +154,6 @@ public class EDSimulator {
         Random random  = new Random(seed);
         Collections.shuffle(numbers,random);
         return numbers.subList(0, k);
-
     }
 
     public static boolean killNodes(List<Node> nodes)
@@ -326,6 +296,8 @@ public class EDSimulator {
      *
      * @param delay
      *   The number of time units before the event is scheduled (non-negative).
+     * @param sender
+     *   In the sync case - the node that this event will be called on
      */
     public static void add(long delay, int type, Node sender, Node target, Payload payload) {
         long id = Math.abs(EDSimulator.globalRandom.nextLong());

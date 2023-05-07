@@ -1,10 +1,6 @@
 import simulator.EDSimulator;
-import kademlia.Util;
 
 import java.io.*;
-import java.math.BigInteger;
-import java.util.Base64;
-import java.util.Random;
 import java.util.Scanner;
 
 public class Simulate {
@@ -40,13 +36,6 @@ public class Simulate {
             }
         }
 
-        // Arguments in order - number of nodes, nBootstraps, bitspace, k, alpha, maxLatency, number of get reqs, number of set reqs, seed
-        //System.out.print(Util.digest(BigInteger.valueOf(1)));
-
-        //EDSimulator.checkFindNeighbors();
-        /*System.out.println("Second simulation");
-        EDSimulator.start(20, 5, 5,3);
-        System.out.println("\n=== PRINTING END STATE");
-        EDSimulator.printEndState();*/
+//        EDSimulator.printEndState();
     }
 }
