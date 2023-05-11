@@ -187,6 +187,9 @@ public class EDSimulator {
                 EDSimulator.add(0,Event.SET_REQUEST,protocols.get(node).node,null,new Payload(key,key.toString()));
                 executeNext();
             } else if (roll < rollForGet) {
+                if (keySet.size() == 0) {
+                    continue;
+                }
                 int node = globalRandom.nextInt(protocols.size()-1);
                 int key = globalRandom.nextInt(keySet.size());
 
@@ -200,20 +203,20 @@ public class EDSimulator {
                 executeNext();
             }
             // TODO: add dynamic refresh events
-
-            System.out.println("BitSpace|Seed|K|Alpha|Max Latency|NumNodes|NumBootstrap|NumGET|NumSET|Churn rate|NumSuccess|Total LookupTime|Total NumRounds");
-            try(FileWriter fw = new FileWriter("GETOutput.txt", true);
-                BufferedWriter bw = new BufferedWriter(fw))
-            {
-                String line = bitSpace+"|"+initialSeed+"|"+k+"|"+alpha+"|"+maxLatency+"|"+nNodes+"|"+nBootstraps+"|"+nGetReq+"|"+nSetReq+"|"+churnFrac+"|";
-                bw.write(line);
-            }
-
-            // Print stats + clear state
-            printSet();
-            printGet();
-            finish();
         }
+
+        System.out.println("BitSpace|Seed|K|Alpha|Max Latency|NumNodes|NumBootstrap|NumGET|NumSET|Churn rate|NumSuccess|Total LookupTime|Total NumRounds");
+        try(FileWriter fw = new FileWriter("GETOutput.txt", true);
+            BufferedWriter bw = new BufferedWriter(fw))
+        {
+            String line = bitSpace+"|"+initialSeed+"|"+k+"|"+alpha+"|"+maxLatency+"|"+nNodes+"|"+nBootstraps+"|"+nGetReq+"|"+nSetReq+"|"+churnFrac+"|";
+            bw.write(line);
+        }
+
+        // Print stats + clear state
+        printSet();
+        printGet();
+        finish();
     }
 
     public static void createNode(int bitSpace, int k, int seed, int alpha, int maxLatency) {
@@ -221,6 +224,7 @@ public class EDSimulator {
             Protocol protocol = new Protocol(new Config(bitSpace, k, new Random(seed), alpha, maxLatency));
             Protocol prevProtocol = nodeIdToProtocol.putIfAbsent(protocol.node.id, protocol);
             if (prevProtocol == null) {
+                protocols.add(protocol);
                 return;
             }
         }

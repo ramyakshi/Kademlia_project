@@ -28,7 +28,7 @@ public class Simulate {
                 // Redirect output to the file using a PrintStream with a PrintWriter
                 try (PrintStream ps = new PrintStream(new FileOutputStream("output" + lineNum + ".txt"))) {
                     System.setOut(ps);
-                    EDSimulator.start(arg[0], arg[1], arg[2], arg[3], arg[4], arg[5], arg[6], arg[7], arg[8], churnFraction);
+                    EDSimulator.startDynamic(arg[0], arg[1], arg[2], arg[3], arg[4], arg[5], arg[6], arg[7], arg[8], churnFraction);
                 }
                 System.setOut(originalOut);
                 System.out.println("Simulation " + lineNum + " ended");
