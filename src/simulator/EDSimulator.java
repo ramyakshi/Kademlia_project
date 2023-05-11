@@ -40,7 +40,7 @@ public class EDSimulator {
         // Increment seed and pass it as value to random constructor while constructing Config
         while (createdNodes < nNodes) {
             // if our bit-space is small, it may clash, just loop until created as needed
-            Protocol protocol = new Protocol(new Config(bitSpace, k, new Random(seed++),alpha,alpha));
+            Protocol protocol = new Protocol(new Config(bitSpace, k, new Random(seed++), alpha, alpha));
             Protocol prevProtocol = nodeIdToProtocol.putIfAbsent(protocol.node.id, protocol);
             if (prevProtocol == null) {
                 protocols.add(protocol);
@@ -93,21 +93,20 @@ public class EDSimulator {
             }
 
             EDSimulator.add(queue.size(),Event.KILL_NODE,null,null,new Payload(nodesToKill));
-
         }
-        System.out.println("Number of Protocols before refresh "+protocols.size());
 
         // 5. Queue Refresh
         // Adding refresh to check if better results, comment out to simulate without refresh, with churn
+        System.out.println("Number of Protocols before refresh "+protocols.size());
         if(churnFrac>0) {
             for (int i = 0; i < protocols.size(); i++) {
                 if(!nodesToKill.contains(protocols.get(i).node))
                     EDSimulator.add(queue.size(), Event.REFRESH_OPERATION, protocols.get(i).node, null, null);
             }
         }
-        System.out.println("Number of Protocols before get "+protocols.size());
 
         // 6. Queue GET
+        System.out.println("Number of Protocols before get "+protocols.size());
         int correct = 0;
         for(int i=0;i<nGetReq;i++)
         {
@@ -142,6 +141,91 @@ public class EDSimulator {
         printGet();
         finish();
     }
+
+    public static void startDynamic(int nNodes, int nBootstraps, int bitSpace, int k, int alpha,int maxLatency, int nGetReq, int nSetReq,int seed, float churnFrac) throws Exception {
+        globalRandom = new Random(seed);
+        int initialSeed = seed;
+        EDSimulator.maxLatency = maxLatency;
+
+        // 1. create an initial subset of nodes
+        int nStartingNodes = nNodes / 2; // hardcode to half
+        for(int i = 0; i < nStartingNodes; i++) // bootstrap first half of nodes, keep second half for dynamic joins
+        {
+            createNode(bitSpace, k, seed++, alpha, alpha);
+
+            Node newNode = protocols.get(protocols.size()-1).node;
+            List<Node> bootstrappeeNodes = new ArrayList<>(globalRandom.nextInt(protocols.size()));
+
+            EDSimulator.add(0, Event.BOOTSTRAP, newNode,null, new Payload(bootstrappeeNodes));
+
+            executeNext();
+        }
+
+        // 2. execute (not just queue) join/kill/set/get, one-by-one, probabilistically
+        int nTotalEvents = (int) ((nNodes / 2) + nGetReq + nSetReq + (nNodes * churnFrac)); // dictates how many events to queue + probabilities of each
+        int rollForJoin = nNodes / 2; // range of roll for join event
+        int rollForSet = rollForJoin + nSetReq;
+        int rollForGet = rollForSet + nGetReq;
+
+        List<BigInteger> keySet = new ArrayList<>(); // list of all keys that have been set by network
+
+        for (int i = 0; i < nTotalEvents; i++) {
+            int roll = globalRandom.nextInt(nTotalEvents);
+            if (roll < rollForJoin) {
+                createNode(bitSpace, k, seed++, alpha, alpha);
+
+                Node node = protocols.get(protocols.size()-1).node;
+                List<Node> bootstrappeeNodes = new ArrayList<>(globalRandom.nextInt(protocols.size()));
+
+                EDSimulator.add(0, Event.BOOTSTRAP, node,null, new Payload(bootstrappeeNodes));
+                executeNext();
+            } else if (roll < rollForSet) {
+                BigInteger key = BigInteger.valueOf(globalRandom.nextInt());
+                keySet.add(key);
+                int node = globalRandom.nextInt(protocols.size()-1);
+
+                EDSimulator.add(0,Event.SET_REQUEST,protocols.get(node).node,null,new Payload(key,key.toString()));
+                executeNext();
+            } else if (roll < rollForGet) {
+                int node = globalRandom.nextInt(protocols.size()-1);
+                int key = globalRandom.nextInt(keySet.size());
+
+                EDSimulator.add(0, Event.GET_REQUEST,protocols.get(node).node,null,new Payload(keySet.get(key),null));
+                executeNext();
+
+            } else { // churn event (roll is inside churn roll range)
+                int node = globalRandom.nextInt(protocols.size());
+
+                EDSimulator.add(0,Event.KILL_NODE,null,null,new Payload(new ArrayList<>(node)));
+                executeNext();
+            }
+            // TODO: add dynamic refresh events
+
+            System.out.println("BitSpace|Seed|K|Alpha|Max Latency|NumNodes|NumBootstrap|NumGET|NumSET|Churn rate|NumSuccess|Total LookupTime|Total NumRounds");
+            try(FileWriter fw = new FileWriter("GETOutput.txt", true);
+                BufferedWriter bw = new BufferedWriter(fw))
+            {
+                String line = bitSpace+"|"+initialSeed+"|"+k+"|"+alpha+"|"+maxLatency+"|"+nNodes+"|"+nBootstraps+"|"+nGetReq+"|"+nSetReq+"|"+churnFrac+"|";
+                bw.write(line);
+            }
+
+            // Print stats + clear state
+            printSet();
+            printGet();
+            finish();
+        }
+    }
+
+    public static void createNode(int bitSpace, int k, int seed, int alpha, int maxLatency) {
+        while (true) {
+            Protocol protocol = new Protocol(new Config(bitSpace, k, new Random(seed), alpha, maxLatency));
+            Protocol prevProtocol = nodeIdToProtocol.putIfAbsent(protocol.node.id, protocol);
+            if (prevProtocol == null) {
+                return;
+            }
+        }
+    }
+
     public static List<Integer> getRandomNumbers(int k, int n, long seed) {
         if (k >= n) {
             k = n;
