@@ -29,7 +29,7 @@ public class EDSimulator {
         setRecords.clear();
         queue.clear();
     }
-    public static void start(int nNodes, int nBootstraps, int bitSpace, int k, int alpha,int maxLatency, int nGetReq, int nSetReq,int seed, float churnFrac) throws Exception{
+    public static void start(int nNodes, int nBootstraps, int bitSpace, int k, int alpha,int maxLatency, int nGetReq, int nSetReq, int seed, int refreshEvery, float churnFrac) throws Exception{
 
         globalRandom = new Random(seed);
         int initialSeed = seed;
@@ -40,7 +40,7 @@ public class EDSimulator {
         // Increment seed and pass it as value to random constructor while constructing Config
         while (createdNodes < nNodes) {
             // if our bit-space is small, it may clash, just loop until created as needed
-            Protocol protocol = new Protocol(new Config(bitSpace, k, new Random(seed++), alpha, alpha));
+            Protocol protocol = new Protocol(new Config(bitSpace, k, new Random(seed++), alpha, refreshEvery));
             Protocol prevProtocol = nodeIdToProtocol.putIfAbsent(protocol.node.id, protocol);
             if (prevProtocol == null) {
                 protocols.add(protocol);
@@ -59,6 +59,16 @@ public class EDSimulator {
             }
             EDSimulator.add(queue.size(), Event.BOOTSTRAP, protocols.get(i).node,null, new Payload(bootstrapNodes));
         }
+
+        //EDSimulator.add(1,Event.PING_REQUEST,protocols.get(2).node,protocols.get(4).node,new Payload("PING"));
+        //EDSimulator.add(queue.size(), Event.STORE_REQUEST,protocols.get(2).node,protocols.get(8).node,new Payload(BigInteger.valueOf(4),"3"));
+        //EDSimulator.add(queue.size()+1, Event.VALUE_LOOKUP_REQUEST,protocols.get(9).node,null,new Payload(new Node(BigInteger.valueOf(4))));
+        //testRemoteStore(protocols.get(2).node,0);
+        //EDSimulator.add(queue.size(), Event.RPC_FIND_VAL_REQUEST,protocols.get(2).node,protocols.get(3).node,new Payload(BigInteger.valueOf(5),null));
+        //EDSimulator.add(1, Event.NODE_LOOKUP_REQUEST, protocols.get(1).node,protocols.get(randomNode).node,new Payload(protocols.get(randomNode).node));
+
+        //EDSimulator.add(queue.size(),Event.SET_REQUEST,protocols.get(13).node,null,new Payload(BigInteger.valueOf(33),"51"));
+        //EDSimulator.add(queue.size(),Event.GET_REQUEST,protocols.get(18).node,null,new Payload(BigInteger.valueOf(33),"51"));
 
         // 3. Queue SET requests
         List<BigInteger> keySet = new ArrayList<>();
@@ -132,180 +142,6 @@ public class EDSimulator {
         finish();
     }
 
-    public static void startDynamicNew(int nNodes, int nBootstraps, int bitSpace, int k, int alpha,int maxLatency, int nGetReq, int nSetReq,int seed, float churnFrac) throws Exception{
-
-        globalRandom = new Random(seed);
-        int initialSeed = seed;
-        EDSimulator.maxLatency = maxLatency;
-
-        // 1. Create nodes
-        int createdNodes = 0;
-        // Increment seed and pass it as value to random constructor while constructing Config
-        while (createdNodes < nNodes) {
-            // if our bit-space is small, it may clash, just loop until created as needed
-            Protocol protocol = new Protocol(new Config(bitSpace, k, new Random(seed++), alpha, alpha));
-            Protocol prevProtocol = nodeIdToProtocol.putIfAbsent(protocol.node.id, protocol);
-            if (prevProtocol == null) {
-                protocols.add(protocol);
-                createdNodes += 1;
-            }
-        }
-
-        // 2. Queue a bootstrap event for each node, using 'nBootstrap' other random nodes to perform the bootstrap
-        for(int i=1; i<nNodes; i++)
-        {
-            List<Integer> randomIndexes = EDSimulator.getRandomNumbers(nBootstraps, i, seed++);
-            List<Node> bootstrapNodes = new ArrayList<>();
-            for(int index : randomIndexes)
-            {
-                bootstrapNodes.add(protocols.get(index).node);
-            }
-            EDSimulator.add(queue.size(), Event.BOOTSTRAP, protocols.get(i).node,null, new Payload(bootstrapNodes));
-            executeNext();
-        }
-
-        List<BigInteger> keySet = new ArrayList<>();
-
-        int nnewNodesToJoin = 200;
-        List<Node> newNodes = new ArrayList<>();
-        int remGetReq = nGetReq, remSetReq = nSetReq, nchurn = (int)Math.ceil(churnFrac * nNodes);
-        int remChurn = nchurn, remNewNodesToJoin = nnewNodesToJoin;
-        int remRefresh = 1;
-        List<Node> nodesToKill = new ArrayList<>();
-        List<BigInteger> nodeIdsToKill = new ArrayList<>();
-        List<Integer> eventHappening = new ArrayList<>();
-        for(int i =0;i<nnewNodesToJoin;i++)
-        {
-            eventHappening.add(3);
-        }
-        for(int i=0;i<nGetReq;i++)
-        {
-            eventHappening.add(0);
-        }
-        for(int i=0;i<nSetReq-1;i++)
-        {
-            eventHappening.add(1);
-        }
-        for(int i=0;i<nchurn;i++)
-        {
-            eventHappening.add(2);
-        }
-
-        Collections.shuffle(eventHappening,EDSimulator.globalRandom);
-
-        // Do single SET
-        int randomIndex = globalRandom.nextInt(protocols.size());
-        BigInteger randomKey = BigInteger.valueOf(globalRandom.nextInt());
-        keySet.add(randomKey);
-        assert EDSimulator.queue.size() == 0;
-        EDSimulator.add(queue.size(),Event.SET_REQUEST,protocols.get(randomIndex).node,null,new Payload(randomKey,randomKey.toString()));
-        executeNext();
-        remSetReq--;
-        int newNodeEvent = 0;
-
-        // Now execute randomly
-        for(int event : eventHappening)
-        {
-            if(remChurn> 0 && remChurn == (int)Math.ceil(nchurn/2) && remRefresh>0)
-            {
-                remRefresh--;
-                for(Protocol p : protocols)
-                {
-                    EDSimulator.add(0, Event.REFRESH_OPERATION, p.node, null, null);
-                    executeNext();
-                }
-            }
-
-            if(event==0 && keySet.size()>0 && remGetReq>0) //at least one set happened
-            {
-                System.out.println("Get event execute");
-                randomIndex = globalRandom.nextInt(protocols.size());
-                while(nodesToKill.contains(protocols.get(randomIndex).node))
-                {
-                    System.out.println("SHould not happen");
-                    randomIndex = globalRandom.nextInt(protocols.size());
-                }
-                if(newNodes.contains(protocols.get(randomIndex).node))
-                {
-                    newNodeEvent++;
-                    System.out.println("New node get event on " + protocols.get(randomIndex).node.getId());
-                }
-
-                int randomKeyIndex = globalRandom.nextInt(keySet.size());
-                assert EDSimulator.queue.size() == 0;
-                EDSimulator.add(0, Event.GET_REQUEST,protocols.get(randomIndex).node,null,new Payload(keySet.get(randomKeyIndex),null));
-                executeNext();
-                remGetReq--;
-            }
-            else if(event == 1 && remSetReq>0)
-            {
-                System.out.println("Set event execute");
-                randomIndex = globalRandom.nextInt(protocols.size());
-                randomKey = BigInteger.valueOf(globalRandom.nextInt());
-                keySet.add(randomKey);
-                assert EDSimulator.queue.size() == 0;
-                if(newNodes.contains(protocols.get(randomIndex).node))
-                {
-                    newNodeEvent++;
-                    System.out.println("New node set event on " + protocols.get(randomIndex).node.getId());
-                }
-                EDSimulator.add(queue.size(),Event.SET_REQUEST,protocols.get(randomIndex).node,null,new Payload(randomKey,randomKey.toString()));
-                executeNext();
-                remSetReq--;
-            }
-            else if(event == 2 && remChurn>0)
-            {
-                System.out.println("Churn event execute");
-                //List<Integer> indicesToKill = getRandomNumbers((int)Math.ceil(churnFrac*nNodes),nNodes,seed++);
-                randomIndex = globalRandom.nextInt(protocols.size());
-                Node nodeToKill = protocols.get(randomIndex).node;
-                nodesToKill.add(nodeToKill);
-                assert EDSimulator.queue.size() == 0;
-                EDSimulator.add(queue.size(),Event.KILL_NODE,null,null,new Payload(Collections.singletonList(nodeToKill)));
-                executeNext();
-                remChurn--;
-            }
-            else if (event == 3 && remNewNodesToJoin > 0)
-            {
-                System.out.println("Bootstrap event execute");
-                Protocol protocol = new Protocol(new Config(bitSpace, k, new Random(seed++), alpha, alpha));
-                Protocol prevProtocol = nodeIdToProtocol.putIfAbsent(protocol.node.id, protocol);
-                if (prevProtocol == null) {
-                    protocols.add(protocol);
-                }
-                newNodes.add(protocol.node);
-                List<Integer> randomIndexes = EDSimulator.getRandomNumbers(nBootstraps, protocols.size(), seed++);
-                List<Node> bootstrapNodes = new ArrayList<>();
-                for(int index : randomIndexes)
-                {
-                    bootstrapNodes.add(protocols.get(index).node);
-                }
-                assert EDSimulator.queue.size() == 0;
-                System.out.print("Node adding " + protocol.node.getId()+"\n");
-                EDSimulator.add(0, Event.BOOTSTRAP, protocol.node,null, new Payload(bootstrapNodes));
-                executeNext();
-                remNewNodesToJoin--;
-            }
-        }
-
-        // Perform the actual simulation
-        boolean exit = false;
-        while (!exit && queue.size()>0) {
-            exit = executeNext();
-        }
-        System.out.println("BitSpace|Seed|K|Alpha|Max Latency|NumNodes|NumBootstrap|NumGET|NumSET|Churn rate|NumSuccess|Total LookupTime|Total NumRounds");
-        try(FileWriter fw = new FileWriter("GETOutput.txt", true);
-            BufferedWriter bw = new BufferedWriter(fw))
-        {
-            String line = bitSpace+"|"+initialSeed+"|"+k+"|"+alpha+"|"+maxLatency+"|"+nNodes+"|"+nBootstraps+"|"+nGetReq+"|"+nSetReq+"|"+churnFrac+"|";
-            bw.write(line);
-        }
-
-        // Print stats + clear state
-        printSet();
-        printGet();
-        finish();
-    }
     public static void startDynamic(int nNodes, int nBootstraps, int bitSpace, int k, int alpha,int maxLatency, int nGetReq, int nSetReq,int seed, float churnFrac) throws Exception {
         globalRandom = new Random(seed);
         int initialSeed = seed;
@@ -533,7 +369,7 @@ public class EDSimulator {
         }
         // REASON : Because bootstrap events have no target
         if((event.type!= Event.BOOTSTRAP && event.type!=Event.VALUE_LOOKUP_REQUEST && event.type!= Event.NODE_LOOKUP_REQUEST
-           && event.type!=Event.SET_REQUEST && event.type != Event.GET_REQUEST && event.type!=Event.REFRESH_OPERATION && event.type!=Event.REPUBLISH_OPERATION)
+           && event.type!=Event.SET_REQUEST && event.type != Event.GET_REQUEST && event.type!=Event.REFRESH_OPERATION)
                 &&  nodeIdToProtocol.getOrDefault(event.target.id,null) == null)
         {
             System.out.println("Target node is not on network - " +event.target.id);

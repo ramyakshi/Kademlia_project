@@ -13,9 +13,9 @@ public class Simulate {
             while((line =br.readLine())!=null)
             {
                 Scanner scanner = new Scanner(line);
-                int[] arg = new int[9];
+                int[] arg = new int[10];
                 float churnFraction = 0;
-                for (int i = 0; i < 9; i++) {
+                for (int i = 0; i < arg.length; i++) {
                     arg[i] = scanner.nextInt();
                 }
                 if(scanner.hasNext())
@@ -28,7 +28,7 @@ public class Simulate {
                 // Redirect output to the file using a PrintStream with a PrintWriter
                 try (PrintStream ps = new PrintStream(new FileOutputStream("output" + lineNum + ".txt"))) {
                     System.setOut(ps);
-                    EDSimulator.startDynamicNew(arg[0], arg[1], arg[2], arg[3], arg[4], arg[5], arg[6], arg[7], arg[8], churnFraction);
+                    EDSimulator.startDynamic(arg[0], arg[1], arg[2], arg[3], arg[4], arg[5], arg[6], arg[7], arg[8], churnFraction);
                 }
                 System.setOut(originalOut);
                 System.out.println("Simulation " + lineNum + " ended");
