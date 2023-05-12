@@ -20,10 +20,13 @@ public class Protocol {
 
     public static int alpha;
 
+    public static int refreshEvery;
+
     public Set<Node> welcomed = new HashSet<>();
     public Protocol(Config config) {
         this.k = config.k;
         this.alpha = config.alpha;
+        this.refreshEvery = config.refreshEvery;
         BigInteger nodeId = new BigInteger(config.bitSpace, config.rng);
         this.node = new Node(nodeId);
         this.routingTable = new RoutingTable(nodeId, config);
@@ -478,6 +481,8 @@ public class Protocol {
                 break;
             case Event.REFRESH_OPERATION:
                 this.refresh(map);
+                // NOTE: may need to comment out re-refresh during static simulation
+                EDSimulator.add(refreshEvery, Event.REFRESH_OPERATION, this.node, null, null);
                 break;
         }
     }
