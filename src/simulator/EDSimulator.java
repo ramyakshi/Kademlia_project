@@ -29,7 +29,7 @@ public class EDSimulator {
         setRecords.clear();
         queue.clear();
     }
-    public static void start(int nNodes, int nBootstraps, int bitSpace, int k, int alpha,int maxLatency, int nGetReq, int nSetReq,int seed, float churnFrac) throws Exception{
+    public static void start(int nNodes, int nBootstraps, int bitSpace, int k, int alpha,int maxLatency, int nGetReq, int nSetReq, int seed, float churnFrac) throws Exception{
 
         globalRandom = new Random(seed);
         int initialSeed = seed;
@@ -177,14 +177,14 @@ public class EDSimulator {
                 Node node = protocols.get(protocols.size()-1).node;
                 List<Node> bootstrappeeNodes = new ArrayList<>(globalRandom.nextInt(protocols.size()));
 
-                EDSimulator.add(0, Event.BOOTSTRAP, node,null, new Payload(bootstrappeeNodes));
+                EDSimulator.add(1, Event.BOOTSTRAP, node,null, new Payload(bootstrappeeNodes));
                 executeNext();
             } else if (roll < rollForSet) {
                 BigInteger key = BigInteger.valueOf(globalRandom.nextInt());
                 keySet.add(key);
                 int node = globalRandom.nextInt(protocols.size()-1);
 
-                EDSimulator.add(0,Event.SET_REQUEST,protocols.get(node).node,null,new Payload(key,key.toString()));
+                EDSimulator.add(1,Event.SET_REQUEST,protocols.get(node).node,null,new Payload(key,key.toString()));
                 executeNext();
             } else if (roll < rollForGet) {
                 if (keySet.size() == 0) {
@@ -193,13 +193,16 @@ public class EDSimulator {
                 int node = globalRandom.nextInt(protocols.size()-1);
                 int key = globalRandom.nextInt(keySet.size());
 
-                EDSimulator.add(0, Event.GET_REQUEST,protocols.get(node).node,null,new Payload(keySet.get(key),null));
+                EDSimulator.add(1, Event.GET_REQUEST,protocols.get(node).node,null,new Payload(keySet.get(key),null));
                 executeNext();
 
             } else { // churn event (roll is inside churn roll range)
-                int node = globalRandom.nextInt(protocols.size());
+                int nodeIdx = globalRandom.nextInt(protocols.size());
+                Node node = protocols.get(nodeIdx).node;
+                List<Node> nodes = new ArrayList<>();
+                nodes.add(node);
 
-                EDSimulator.add(0,Event.KILL_NODE,null,null,new Payload(new ArrayList<>(node)));
+                EDSimulator.add(1,Event.KILL_NODE,null,null,new Payload(nodes));
                 executeNext();
             }
             // TODO: add dynamic refresh events
