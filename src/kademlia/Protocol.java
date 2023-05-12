@@ -286,7 +286,7 @@ public class Protocol {
         this.storage.setValue(key,value,0);
         // as this node is storing the key, it should also republish it
         // TODO: the key is correct? i.e. no transforms from prev funcs
-        EDSimulator.add(refreshEvery, Event.REPUBLISH_REQUEST, this.node,null, new Payload(key, value));
+//        EDSimulator.add(refreshEvery, Event.REPUBLISH_REQUEST, this.node,null, new Payload(key, value));
         return new Event(EDSimulator.globalRandom.nextLong(),1,Event.STORE_RESPONSE,this.node,sender,new Payload(key,value,"OK"));
     }
 
@@ -407,7 +407,7 @@ public class Protocol {
         boolean success = setDigest(eventId, key, value, nodeToProtocolMap);
         // SET could be triggered by REPUBLISH as well, so this node is either the original publisher (who may not store the key) or a storing node
         // either way, it should republish the key
-        EDSimulator.add(refreshEvery, Event.REPUBLISH_REQUEST, this.node,null,new Payload(key, key.toString()));
+//        EDSimulator.add(refreshEvery, Event.REPUBLISH_REQUEST, this.node,null,new Payload(key, key.toString()));
         return success;
     }
 

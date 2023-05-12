@@ -148,7 +148,7 @@ public class EDSimulator {
         EDSimulator.maxLatency = maxLatency;
 
         // 1. create an initial subset of nodes
-        int nStartingNodes = nNodes / 2; // hardcode to half
+        int nStartingNodes = (int) (1.0 * (float) nNodes);
         for(int i = 0; i < nStartingNodes; i++) // bootstrap first half of nodes, keep second half for dynamic joins
         {
             createNode(bitSpace, k, seed++, alpha, refreshEvery);
@@ -165,8 +165,9 @@ public class EDSimulator {
         }
 
         // 2. execute (not just queue) join/kill/set/get, one-by-one, probabilistically
-        int nTotalEvents = (int) ((nNodes / 2) + nGetReq + nSetReq + (nNodes * churnFrac)); // dictates how many events to queue + probabilities of each
-        int rollForJoin = nNodes / 2; // range of roll for join event
+        int nJoin = (int) (0.0 * (float) nNodes);
+        int nTotalEvents = (int) (nJoin + nGetReq + nSetReq + (nNodes * churnFrac)); // dictates how many events to queue + probabilities of each
+        int rollForJoin = nJoin; // range of roll for join event
         int rollForSet = rollForJoin + nSetReq;
         int rollForGet = rollForSet + nGetReq;
 
