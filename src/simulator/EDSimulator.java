@@ -166,7 +166,7 @@ public class EDSimulator {
 
         List<BigInteger> keySet = new ArrayList<>();
 
-        int nnewNodesToJoin = 2000;
+        int nnewNodesToJoin = 200;
         List<Node> newNodes = new ArrayList<>();
         int remGetReq = nGetReq, remSetReq = nSetReq, nchurn = (int)Math.ceil(churnFrac * nNodes);
         int remChurn = nchurn, remNewNodesToJoin = nnewNodesToJoin;
@@ -212,11 +212,6 @@ public class EDSimulator {
                 for(Protocol p : protocols)
                 {
                     EDSimulator.add(0, Event.REFRESH_OPERATION, p.node, null, null);
-                    executeNext();
-                }
-                for(Protocol p : protocols)
-                {
-                    EDSimulator.add(0, Event.REPUBLISH_OPERATION,p.node,null,null);
                     executeNext();
                 }
             }
