@@ -45,6 +45,8 @@ public class Event implements Comparable<Event> {
 
     public static final int REFRESH_OPERATION = 20;
 
+    public static final int REPUBLISH_OPERATION = 21;
+
     public Node sender;
     public Node target;
     public Payload payload;
@@ -85,6 +87,7 @@ public class Event implements Comparable<Event> {
             case GET_REQUEST -> "GET_REQUEST";
             case GET_RESPONSE -> "GET_RESPONSE";
             case REFRESH_OPERATION -> "REFRESH_OPERATION";
+            case REPUBLISH_OPERATION -> "REPUBLISH_OPERATION";
             default -> "UNKNOWN";
         };
         return String.format("%d %s", this.timestamp, type);

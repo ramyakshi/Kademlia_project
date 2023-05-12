@@ -35,6 +35,18 @@ public class Protocol {
         return this.routingTable;
     }
 
+    public void rePublish(HashMap<BigInteger, Protocol> nodeToProtocol)
+    {
+        HashMap<BigInteger,String> pairMap = new HashMap<>();
+        for(Map.Entry<BigInteger,Content> entry : this.storage.getNodeStorageTable().entrySet())
+        {
+            pairMap.put(entry.getKey(),entry.getValue().getValue());
+        }
+        for(Map.Entry<BigInteger,String> entry : pairMap.entrySet())
+        {
+            set(0,entry.getKey(),entry.getValue(), nodeToProtocol);
+        }
+    }
     public void refresh(HashMap<BigInteger, Protocol> nodeToProtocol)
     {
         System.out.println("Calling refresh for node "+this.node.getId());
@@ -479,6 +491,9 @@ public class Protocol {
                 break;
             case Event.REFRESH_OPERATION:
                 this.refresh(map);
+                break;
+            case Event.REPUBLISH_OPERATION:
+                this.rePublish(map);
                 break;
         }
     }
