@@ -399,7 +399,6 @@ public class Protocol {
     public boolean set(long eventId,BigInteger key, String value,HashMap<BigInteger,Protocol> nodeToProtocolMap){
         System.out.println("Setting '" + key + "' = '" + value + "' on network, initiated by " + this.node.getId());
         return setDigest(eventId, key, value, nodeToProtocolMap);
-
     }
 
     public boolean setDigest(long eventId, BigInteger key, String value,HashMap<BigInteger,Protocol> nodeToProtocolMap)  {

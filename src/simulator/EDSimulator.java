@@ -154,10 +154,11 @@ public class EDSimulator {
             createNode(bitSpace, k, seed++, alpha, alpha);
 
             Node newNode = protocols.get(protocols.size()-1).node;
-            List<Node> bootstrappeeNodes = new ArrayList<>(globalRandom.nextInt(protocols.size()));
+            Node nodeAssistingBootstrap = protocols.get(globalRandom.nextInt(protocols.size())).node;
+            List<Node> nodesAssistingBootstrap = new ArrayList<>();
+            nodesAssistingBootstrap.add(nodeAssistingBootstrap);
 
-            EDSimulator.add(0, Event.BOOTSTRAP, newNode,null, new Payload(bootstrappeeNodes));
-
+            EDSimulator.add(0, Event.BOOTSTRAP, newNode,null, new Payload(nodesAssistingBootstrap));
             executeNext();
         }
 
@@ -174,17 +175,19 @@ public class EDSimulator {
             if (roll < rollForJoin) {
                 createNode(bitSpace, k, seed++, alpha, alpha);
 
-                Node node = protocols.get(protocols.size()-1).node;
-                List<Node> bootstrappeeNodes = new ArrayList<>(globalRandom.nextInt(protocols.size()));
+                Node newNode = protocols.get(protocols.size()-1).node;
+                Node nodeAssistingBootstrap = protocols.get(globalRandom.nextInt(protocols.size())).node;
+                List<Node> nodesAssistingBootstrap = new ArrayList<>();
+                nodesAssistingBootstrap.add(nodeAssistingBootstrap);
 
-                EDSimulator.add(1, Event.BOOTSTRAP, node,null, new Payload(bootstrappeeNodes));
+                EDSimulator.add(1, Event.BOOTSTRAP, newNode,null, new Payload(nodesAssistingBootstrap));
                 executeNext();
             } else if (roll < rollForSet) {
                 BigInteger key = BigInteger.valueOf(globalRandom.nextInt());
                 keySet.add(key);
                 int node = globalRandom.nextInt(protocols.size()-1);
 
-                EDSimulator.add(1,Event.SET_REQUEST,protocols.get(node).node,null,new Payload(key,key.toString()));
+                EDSimulator.add(1,Event.SET_REQUEST,protocols.get(node).node,null,new Payload(key, key.toString()));
                 executeNext();
             } else if (roll < rollForGet) {
                 if (keySet.size() == 0) {
