@@ -45,6 +45,8 @@ public class Event implements Comparable<Event> {
 
     public static final int REFRESH_OPERATION = 20;
 
+    public static final int REPUBLISH_REQUEST = 21;
+
     public Node sender;
     public Node target;
     public Payload payload;

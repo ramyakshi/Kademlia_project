@@ -284,6 +284,9 @@ public class Protocol {
         //System.out.println(this.node.getId()+" storing key "+ key+" and value "+ value);
         this.welcomeIfNew(sender,nodeToProtocolMap);
         this.storage.setValue(key,value,0);
+        // as this node is storing the key, it should also republish it
+        // TODO: the key is correct? i.e. no transforms from prev funcs
+        EDSimulator.add(refreshEvery, Event.REPUBLISH_REQUEST, this.node,null, new Payload(key, value));
         return new Event(EDSimulator.globalRandom.nextLong(),1,Event.STORE_RESPONSE,this.node,sender,new Payload(key,value,"OK"));
     }
 
@@ -401,7 +404,11 @@ public class Protocol {
 
     public boolean set(long eventId,BigInteger key, String value,HashMap<BigInteger,Protocol> nodeToProtocolMap){
         System.out.println("Setting '" + key + "' = '" + value + "' on network, initiated by " + this.node.getId());
-        return setDigest(eventId, key, value, nodeToProtocolMap);
+        boolean success = setDigest(eventId, key, value, nodeToProtocolMap);
+        // SET could be triggered by REPUBLISH as well, so this node is either the original publisher (who may not store the key) or a storing node
+        // either way, it should republish the key
+        EDSimulator.add(refreshEvery, Event.REPUBLISH_REQUEST, this.node,null,new Payload(key, key.toString()));
+        return success;
     }
 
     public boolean setDigest(long eventId, BigInteger key, String value,HashMap<BigInteger,Protocol> nodeToProtocolMap)  {
@@ -477,6 +484,10 @@ public class Protocol {
                     System.out.println("Value lookup returned " + result);
                 break;
             case Event.SET_REQUEST:
+                this.set(event.eventId, event.payload.keyToStore, event.payload.valueToStore, map);
+                break;
+            case Event.REPUBLISH_REQUEST:
+                // hack: republish is same as SET, except simulator can distinguish them (to pull out and execute all REPUBLISH separately)
                 this.set(event.eventId, event.payload.keyToStore, event.payload.valueToStore, map);
                 break;
             case Event.REFRESH_OPERATION:

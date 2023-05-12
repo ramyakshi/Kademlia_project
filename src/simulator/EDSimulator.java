@@ -147,7 +147,7 @@ public class EDSimulator {
         int initialSeed = seed;
         EDSimulator.maxLatency = maxLatency;
 
-        // 1. create an initial subset of nodes (1 new node / time unit)
+        // 1. create an initial subset of nodes
         int nStartingNodes = nNodes / 2; // hardcode to half
         for(int i = 0; i < nStartingNodes; i++) // bootstrap first half of nodes, keep second half for dynamic joins
         {
@@ -161,7 +161,7 @@ public class EDSimulator {
             EDSimulator.add(0, Event.BOOTSTRAP, newNode,null, new Payload(nodesAssistingBootstrap));
             executeNext();
             // queue up the first refresh operation for this node, with spread
-            EDSimulator.add(i, Event.REFRESH_OPERATION, newNode, null, null);
+            EDSimulator.add(i+1, Event.REFRESH_OPERATION, newNode, null, null);
         }
 
         // 2. execute (not just queue) join/kill/set/get, one-by-one, probabilistically
@@ -173,9 +173,9 @@ public class EDSimulator {
         List<BigInteger> keySet = new ArrayList<>(); // list of all keys that have been set by network
 
         for (int i = 0; i < nTotalEvents; i++) {
-            // Refresh events have special treatment, when their time is here, just do them all.
-            // they are not inside our 1 event / sec model.
-            while (queue.peek() != null && queue.peek().timestamp <= CommonState.getTime() && queue.peek().type == Event.REFRESH_OPERATION) {
+            CommonState.setTime(i);
+            // just run all events which time is now
+            while (queue.peek() != null && queue.peek().timestamp <= CommonState.getTime()) {
                 executeNext();
             }
 
@@ -189,7 +189,6 @@ public class EDSimulator {
                 nodesAssistingBootstrap.add(nodeAssistingBootstrap);
 
                 EDSimulator.add(1, Event.BOOTSTRAP, newNode,null, new Payload(nodesAssistingBootstrap));
-                executeNext();
                 EDSimulator.add(refreshEvery, Event.REFRESH_OPERATION, newNode, null, null);
             } else if (roll < rollForSet) {
                 BigInteger key = BigInteger.valueOf(globalRandom.nextInt());
@@ -197,7 +196,6 @@ public class EDSimulator {
                 int node = globalRandom.nextInt(protocols.size()-1);
 
                 EDSimulator.add(1,Event.SET_REQUEST,protocols.get(node).node,null,new Payload(key, key.toString()));
-                executeNext();
             } else if (roll < rollForGet) {
                 if (keySet.size() == 0) {
                     continue;
@@ -206,8 +204,6 @@ public class EDSimulator {
                 int key = globalRandom.nextInt(keySet.size());
 
                 EDSimulator.add(1, Event.GET_REQUEST,protocols.get(node).node,null,new Payload(keySet.get(key),null));
-                executeNext();
-
             } else { // churn event (roll is inside churn roll range)
                 int nodeIdx = globalRandom.nextInt(protocols.size());
                 Node node = protocols.get(nodeIdx).node;
@@ -215,7 +211,6 @@ public class EDSimulator {
                 nodes.add(node);
 
                 EDSimulator.add(1,Event.KILL_NODE,null,null,new Payload(nodes));
-                executeNext();
             }
         }
 
@@ -383,7 +378,7 @@ public class EDSimulator {
         }
         // REASON : Because bootstrap events have no target
         if((event.type!= Event.BOOTSTRAP && event.type!=Event.VALUE_LOOKUP_REQUEST && event.type!= Event.NODE_LOOKUP_REQUEST
-           && event.type!=Event.SET_REQUEST && event.type != Event.GET_REQUEST && event.type!=Event.REFRESH_OPERATION)
+           && event.type!=Event.SET_REQUEST && event.type != Event.GET_REQUEST && event.type!=Event.REFRESH_OPERATION && event.type != Event.REPUBLISH_REQUEST)
                 &&  nodeIdToProtocol.getOrDefault(event.target.id,null) == null)
         {
             System.out.println("Target node is not on network - " +event.target.id);
